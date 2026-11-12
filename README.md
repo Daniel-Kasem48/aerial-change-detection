@@ -303,11 +303,18 @@ print(report.to_dict())                 # JSON-ready, each flag has a reason
 index = FingerprintIndex.load("index.json")
 matches = index.find_similar(perceptual_hash(cv2.imread("claim.jpg")))
 # -> [Match(image_id='old-claim.jpg', distance=3)]  (<= 10 = same photo)
+
+# 3. Error level analysis: areas with a different JPEG save history
+from src.forensics.ela import analyze_ela, render_heatmap
+ela = analyze_ela("claim.jpg")
+print(ela.score, ela.regions)           # e.g. 1.0 [Region(x=704, y=768, w=400, h=224, strength=8.07)]
+cv2.imwrite("heat.jpg", render_heatmap(cv2.imread("claim.jpg"), ela.heatmap))
 ```
 
 | Check | Flags | Notes |
 |---|---|---|
 | Metadata | `ai_generated_marker`, `editing_software`, `modified_after_capture`, `no_camera_metadata` | Reads EXIF, XMP (IPTC/C2PA `trainedAlgorithmicMedia`) and PNG text from diffusion tools. Metadata can be stripped or faked, so a clean report is not proof |
+| ELA | suspicious regions + heatmap | Re-saves at 9 JPEG qualities, luminance only, corrects for texture with a robust fit, robust z-scores per 16x16 block. Synthetic test: pasted patches z 13-17, clean photos <= 3.2. Needs JPEG input; misses pastes that share the photo's own compression history (copy-move check covers those) |
 | Fingerprint | near-duplicate matches | 64-bit DCT pHash; survives resize, recompression, brightness changes, small crops |
 
 ## Python API
