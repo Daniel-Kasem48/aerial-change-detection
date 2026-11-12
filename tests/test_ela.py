@@ -113,3 +113,22 @@ def test_unreadable_file_raises(tmp_path: Path) -> None:
     bad.write_bytes(b"nope")
     with pytest.raises(ValueError):
         analyze_ela(bad)
+
+
+SAMPLES = Path(__file__).parent.parent / "samples"
+
+
+def test_thin_painted_lines_on_real_photo_are_located(tmp_path: Path) -> None:
+    """Painted scratches on a real messenger photo: weak per block, long connected trail."""
+    photo = cv2.imread(str(SAMPLES / "2.jpg"))
+    for i in range(6):
+        cv2.line(photo, (300 + i * 25, 820), (620 + i * 20, 1050), (40, 40, 40), 4)
+    report = analyze_ela(_write_jpeg(tmp_path / "scratched.jpg", photo, 90))
+    assert any(_iou((r.x, r.y, r.w, r.h), (300, 820, 420, 230)) > 0.2 for r in report.regions), \
+        report.regions
+
+
+@pytest.mark.parametrize("name", sorted(p.name for p in SAMPLES.glob("*.jpg")))
+def test_untouched_real_photos_have_no_regions(name: str) -> None:
+    report = analyze_ela(SAMPLES / name)
+    assert report.regions == [], report.regions

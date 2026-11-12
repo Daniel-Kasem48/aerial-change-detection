@@ -38,6 +38,8 @@ BLOCK = 16
 QUALITIES = tuple(range(55, 100, 5))
 Z_THRESHOLD = 5.0
 MIN_REGION_BLOCKS = 4
+TRAIL_THRESHOLD = 3.5    # weaker blocks count if they form a long connected trail
+MIN_TRAIL_BLOCKS = 20    # clean photos never exceeded 7 (26 real + 11 synthetic checked)
 MIN_MEDIAN_ERROR = 0.15  # mean abs pixel error per block
 MIN_MAD = 0.15          # log units; stops tiny-noise images from exploding z
 
@@ -104,7 +106,7 @@ def analyze_ela(path: str | Path) -> ElaReport:
 
     if regions:
         peak = regions[0].strength
-        score = float(np.clip((peak - Z_THRESHOLD) / 6.0 + 0.5, 0.5, 1.0))
+        score = float(np.clip((peak - TRAIL_THRESHOLD) / 6.0 + 0.5, 0.5, 1.0))
         reason = f"{len(regions)} region(s) compress differently from the rest of the photo"
     else:
         score = float(np.clip((z.max() - 2.0) / (Z_THRESHOLD - 2.0), 0.0, 1.0) * 0.25)
@@ -174,18 +176,30 @@ def _block_mean(arr: np.ndarray) -> np.ndarray:
 
 
 def _regions(z: np.ndarray) -> list[Region]:
-    mask = (z > Z_THRESHOLD).astype(np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
+    """Strong compact areas (z > Z_THRESHOLD) plus long weak trails such as painted lines."""
+    strong = cv2.morphologyEx((z > Z_THRESHOLD).astype(np.uint8), cv2.MORPH_CLOSE,
+                              np.ones((3, 3), np.uint8))
+    regions = _components(strong, z, MIN_REGION_BLOCKS)
+    trails = (z > TRAIL_THRESHOLD).astype(np.uint8)
+    for r in _components(trails, z, MIN_TRAIL_BLOCKS):
+        if not any(_overlaps(r, s) for s in regions):
+            regions.append(r)
+    return sorted(regions, key=lambda r: r.strength, reverse=True)
+
+
+def _components(mask: np.ndarray, z: np.ndarray, min_blocks: int) -> list[Region]:
     count, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
-    regions = []
+    out = []
     for i in range(1, count):
         bx, by, bw, bh, area = stats[i]
-        if area < MIN_REGION_BLOCKS:
-            continue
-        peak = float(z[labels == i].max())
-        regions.append(Region(int(bx * BLOCK), int(by * BLOCK), int(bw * BLOCK),
-                              int(bh * BLOCK), round(peak, 2)))
-    return sorted(regions, key=lambda r: r.strength, reverse=True)
+        if area >= min_blocks:
+            out.append(Region(int(bx * BLOCK), int(by * BLOCK), int(bw * BLOCK),
+                              int(bh * BLOCK), round(float(z[labels == i].max()), 2)))
+    return out
+
+
+def _overlaps(a: Region, b: Region) -> bool:
+    return a.x < b.x + b.w and b.x < a.x + a.w and a.y < b.y + b.h and b.y < a.y + a.h
 
 
 def _heatmap(z: np.ndarray, h: int, w: int) -> np.ndarray:
