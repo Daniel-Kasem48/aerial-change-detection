@@ -31,6 +31,7 @@ import yaml
 
 from .exceptions import ConfigError
 from .logging_config import get_logger
+from .reasoning import ReasoningConfig
 
 logger = get_logger(__name__)
 
@@ -157,10 +158,12 @@ class OutputConfig:
 class AppConfig:
     """Top-level application configuration."""
     detector: DetectorConfig = field(default_factory=DetectorConfig)
+    object_detector: ObjectDetectorConfig = field(default_factory=ObjectDetectorConfig)
     alignment: AlignmentConfig = field(default_factory=AlignmentConfig)
     normalization: NormalizationConfig = field(default_factory=NormalizationConfig)
     multiscale: MultiscaleConfig = field(default_factory=MultiscaleConfig)
     output: OutputConfig = field(default_factory=OutputConfig)
+    reasoning: ReasoningConfig = field(default_factory=ReasoningConfig)
 
 
 # ---------------------------------------------------------------------------
@@ -201,10 +204,12 @@ def load_config(path: str | Path | None = None) -> AppConfig:
     try:
         return AppConfig(
             detector=_build_section(DetectorConfig, raw.get("detector")),
+            object_detector=_build_section(ObjectDetectorConfig, raw.get("object_detector")),
             alignment=_build_section(AlignmentConfig, raw.get("alignment")),
             normalization=_build_section(NormalizationConfig, raw.get("normalization")),
             multiscale=_build_section(MultiscaleConfig, raw.get("multiscale")),
             output=_build_section(OutputConfig, raw.get("output")),
+            reasoning=_build_section(ReasoningConfig, raw.get("reasoning")),
         )
     except (TypeError, ValueError) as exc:
         raise ConfigError(str(exc)) from exc
@@ -245,7 +250,8 @@ def _apply_env_overrides(raw: dict[str, Any]) -> dict[str, Any]:
             "alignment": "alignment",
             "normalization": "normalization",
             "multiscale": "multiscale",
-            "output": "output"
+            "output": "output",
+            "reasoning": "reasoning",
         }
         section = section_map.get(section, section)
 
