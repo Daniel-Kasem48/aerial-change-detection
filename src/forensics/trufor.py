@@ -35,6 +35,13 @@ from PIL import Image
 REGION_THRESHOLD = 0.5   # map value above which a pixel counts as manipulated
 MIN_REGION_FRACTION = 0.002
 
+# Yes/no rule, chosen on the real-world eval (scripts/eval_realworld.py) as the
+# point with zero false alarms on 28 clean photos: catches 20/84 edits (24%).
+# Clean photos often show small or weak regions, so those alone don't count.
+SUSPICIOUS_SCORE = 0.7
+SUSPICIOUS_FRACTION = 0.02
+SUSPICIOUS_STRENGTH = 0.8
+
 
 class TruForUnavailableError(RuntimeError):
     """TruFor code or weights are not installed."""
@@ -56,9 +63,16 @@ class TruForReport:
     manipulated_fraction: float = 0.0
     heatmap: np.ndarray | None = field(default=None, repr=False, compare=False)
 
+    @property
+    def suspicious(self) -> bool:
+        strongest = max((r.strength for r in self.regions), default=0.0)
+        return self.score > SUSPICIOUS_SCORE or (
+            self.manipulated_fraction >= SUSPICIOUS_FRACTION and strongest >= SUSPICIOUS_STRENGTH)
+
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data.pop("heatmap")
+        data["suspicious"] = self.suspicious
         return data
 
 

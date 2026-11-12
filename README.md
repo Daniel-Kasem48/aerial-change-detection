@@ -333,9 +333,22 @@ cv2.imwrite("heat.jpg", render_heatmap(cv2.imread("claim.jpg"), ela.heatmap))
 | Pasted, then messenger-compressed | 0/14 | 10/14 |
 | **Total** | **0/84** | **53/84 (63%)** |
 
-False alarms on the 28 clean copies: ELA 6/28, TruFor score > 0.5 on 2/28 (both
-from one photo that had passed through iPhoto). Thin edits are weak because
-images are downscaled to 1024 px for CPU speed. Small sample; treat as indicative.
+"Located" only says the heatmap marks the edit when you already know where it
+is: TruFor also marks small regions on 19 of the 28 clean copies. As an
+**automatic yes/no decision** the trade-off is:
+
+| False alarms on clean photos | Edits caught (TruFor) |
+|---|---|
+| 0/28 (0%) | 20/84 (24%) |
+| 1/28 (4%) | 26/84 (31%) |
+| 3/28 (11%) | 36/84 (43%) |
+| 5/28 (18%) | 46/84 (55%) |
+
+`TruForReport.suspicious` uses the zero-false-alarm rule (score > 0.7, or a
+marked area >= 2% with strength >= 0.8). ELA gave false alarms on 6/28 clean
+copies. Thin edits are weak because images are downscaled to 1024 px for CPU
+speed. The rule was picked on the same 14 photos it is reported on, so the
+numbers are optimistic; a larger held-out set is needed for a fair figure.
 
 ### TruFor (trained forgery detector, optional)
 

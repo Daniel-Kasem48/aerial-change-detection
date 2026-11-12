@@ -62,3 +62,17 @@ def test_pasted_area_scores_high_and_is_located(detector: TruForDetector, pasted
     assert report.heatmap.shape == (1280, 1280)  # back at full resolution
     data = json.loads(json.dumps(report.to_dict()))
     assert "heatmap" not in data and data["score"] == report.score
+
+
+def test_suspicious_rule_uses_score_or_strong_large_region() -> None:
+    from src.forensics.trufor import Region, TruForReport
+
+    assert TruForReport(score=0.8).suspicious
+    assert not TruForReport(score=0.2).suspicious
+    big_strong = Region(0, 0, 10, 10, strength=0.85)
+    assert TruForReport(score=0.2, regions=[big_strong], manipulated_fraction=0.03).suspicious
+    # small or weak regions alone are normal on clean photos
+    assert not TruForReport(score=0.2, regions=[big_strong], manipulated_fraction=0.01).suspicious
+    weak = Region(0, 0, 10, 10, strength=0.7)
+    assert not TruForReport(score=0.2, regions=[weak], manipulated_fraction=0.05).suspicious
+    assert "suspicious" in TruForReport(score=0.8).to_dict()
