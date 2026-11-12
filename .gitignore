@@ -41,3 +41,6 @@ htmlcov/
 dataset/
 *.mp4
 *.pt
+
+# Fraud Scanner uploads and fingerprint index
+data/
