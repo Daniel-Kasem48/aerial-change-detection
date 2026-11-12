@@ -314,8 +314,28 @@ cv2.imwrite("heat.jpg", render_heatmap(cv2.imread("claim.jpg"), ela.heatmap))
 | Check | Flags | Notes |
 |---|---|---|
 | Metadata | `ai_generated_marker`, `editing_software`, `modified_after_capture`, `no_camera_metadata` | Reads EXIF, XMP (IPTC/C2PA `trainedAlgorithmicMedia`) and PNG text from diffusion tools. Metadata can be stripped or faked, so a clean report is not proof |
-| ELA | suspicious regions + heatmap | Re-saves at 9 JPEG qualities, luminance only, corrects for texture with a robust fit, robust z-scores per 16x16 block. Synthetic test: pasted patches z 13-17, clean photos <= 3.2. Needs JPEG input; misses pastes that share the photo's own compression history (copy-move check covers those) |
+| ELA | suspicious regions + heatmap | Re-saves at 9 JPEG qualities, luminance only, corrects for texture with a robust fit, robust z-scores per 16x16 block. Works when the edit was saved at a clearly different quality than the original (synthetic: pasted patches z 13-17, clean <= 3.2), but **fails on real high-quality camera photos** (see results below). Use as a visual aid, not a verdict |
 | Fingerprint | near-duplicate matches | 64-bit DCT pHash; survives resize, recompression, brightness changes, small crops |
+
+### Real-world results
+
+`scripts/eval_realworld.py` on 14 real camera photos from Wikimedia Commons
+(car damage, windshields, water damage, interiors), each as 2 clean copies and
+6 realistic edits (112 images). "Located" = a detected region overlaps the edit.
+
+| Edit | ELA located | TruFor located |
+|---|---|---|
+| Area pasted from another photo | 0/14 | 10/14 |
+| Area cloned within the photo | 0/14 | 11/14 |
+| Object removed (inpainting) | 0/14 | 13/14 |
+| Painted scratches | 0/14 | 2/14 |
+| Added text | 0/14 | 7/14 |
+| Pasted, then messenger-compressed | 0/14 | 10/14 |
+| **Total** | **0/84** | **53/84 (63%)** |
+
+False alarms on the 28 clean copies: ELA 6/28, TruFor score > 0.5 on 2/28 (both
+from one photo that had passed through iPhoto). Thin edits are weak because
+images are downscaled to 1024 px for CPU speed. Small sample; treat as indicative.
 
 ### TruFor (trained forgery detector, optional)
 
