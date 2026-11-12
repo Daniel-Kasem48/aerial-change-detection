@@ -317,6 +317,42 @@ cv2.imwrite("heat.jpg", render_heatmap(cv2.imread("claim.jpg"), ela.heatmap))
 | ELA | suspicious regions + heatmap | Re-saves at 9 JPEG qualities, luminance only, corrects for texture with a robust fit, robust z-scores per 16x16 block. Synthetic test: pasted patches z 13-17, clean photos <= 3.2. Needs JPEG input; misses pastes that share the photo's own compression history (copy-move check covers those) |
 | Fingerprint | near-duplicate matches | 64-bit DCT pHash; survives resize, recompression, brightness changes, small crops |
 
+### TruFor (trained forgery detector, optional)
+
+Hand-made checks like ELA break down on real high-quality photos (see
+`scripts/eval_realworld.py`). For those, `src/forensics/trufor.py` wraps
+**TruFor** (F. Guillaro, D. Cozzolino, A. Sud, N. Dufour, L. Verdoliva,
+"TruFor: Leveraging all-round clues for trustworthy image forgery detection
+and localization", CVPR 2023, https://grip-unina.github.io/TruFor). It gives
+a 0-1 manipulation score plus a per-pixel map.
+
+TruFor's code and weights are licensed by GRIP-UNINA for **non-commercial use
+only** and are not included here. Setup:
+
+```bash
+git clone https://github.com/grip-unina/TruFor
+# download TruFor_weights.zip from the TruFor README (MD5 7bee48f3476c75616c3c5721ab256ff8)
+pip install "timm<1" yacs
+```
+
+Convert the checkpoint once to a numbers-only state dict, so it loads with
+`torch.load(weights_only=True)` and cannot execute code:
+
+```python
+import numpy as np, numpy.core.multiarray as ma, torch
+safe = [(ma.scalar, "numpy.core.multiarray.scalar"), np.dtype, type(np.dtype("float64"))]
+with torch.serialization.safe_globals(safe):
+    ck = torch.load("trufor.pth.tar", map_location="cpu", weights_only=True)
+torch.save(ck["state_dict"], "trufor_state_dict.pt")
+```
+
+```python
+from src.forensics.trufor import TruForDetector
+det = TruForDetector(trufor_dir="TruFor/TruFor_train_test", weights="trufor_state_dict.pt")
+report = det.analyze("claim.jpg")   # ~25 s on a laptop CPU at 1024 px
+print(report.score, report.regions)
+```
+
 ## Python API
 
 ```python

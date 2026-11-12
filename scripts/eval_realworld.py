@@ -6,7 +6,10 @@ Takes a folder of real camera JPEGs, creates realistic edits of each one and
 reports how often ELA finds the edit (and how often it falsely flags clean
 copies).
 
-    python scripts/eval_realworld.py PHOTOS_DIR OUT_DIR
+    python scripts/eval_realworld.py PHOTOS_DIR OUT_DIR [--trufor]
+
+With --trufor (needs TRUFOR_DIR / TRUFOR_WEIGHTS) the TruFor network is
+evaluated too (~25 s per image on a laptop CPU).
 
 Per photo:
   clean_resave     opened and saved again at q90 (no edit)          -> must stay clean
@@ -30,6 +33,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.forensics.ela import analyze_ela, render_heatmap  # noqa: E402
+from src.forensics.trufor import TruForDetector  # noqa: E402
 
 EDITS = ["clean_resave", "clean_messenger", "splice", "clone", "inpaint", "paint", "text",
          "splice_messenger"]
@@ -115,7 +119,8 @@ def _iou(a, b) -> float:
     return inter / (aw * ah + bw * bh - inter) if inter else 0.0
 
 
-def main(photos: Path, out: Path) -> None:
+def main(photos: Path, out: Path, use_trufor: bool = False) -> None:
+    trufor = TruForDetector() if use_trufor else None
     out.mkdir(parents=True, exist_ok=True)
     files = sorted(photos.glob("*.jpg"))
     rng = np.random.default_rng(7)
@@ -131,8 +136,14 @@ def main(photos: Path, out: Path) -> None:
             cv2.imwrite(str(path), edited, [cv2.IMWRITE_JPEG_QUALITY, q])
             r = analyze_ela(path)
             hit = bool(box) and any(_iou((g.x, g.y, g.w, g.h), box) > 0.1 for g in r.regions)
-            rows.append(dict(photo=f.name, edit=kind, flagged=bool(r.regions), localized=hit,
-                             score=r.score, regions=len(r.regions), quality=r.estimated_quality))
+            row = dict(photo=f.name, edit=kind, flagged=bool(r.regions), localized=hit,
+                       score=r.score, regions=len(r.regions), quality=r.estimated_quality)
+            if trufor:
+                t = trufor.analyze(path)
+                row.update(tf_score=t.score, tf_flagged=t.score > 0.5,
+                           tf_localized=bool(box) and any(
+                               _iou((g.x, g.y, g.w, g.h), box) > 0.1 for g in t.regions))
+            rows.append(row)
             if i < 3:
                 heat = render_heatmap(edited, r.heatmap)
                 for g in r.regions:
@@ -143,17 +154,29 @@ def main(photos: Path, out: Path) -> None:
                 cv2.imwrite(str(out / f"viz_{f.stem}_{kind}.jpg"),
                             cv2.resize(np.hstack([edited, heat]), (1200, int(600 * edited.shape[0] / edited.shape[1]))))
         print(f"{f.name}: done", flush=True)
+        (out / "results.json").write_text(json.dumps(rows, indent=1))
 
     (out / "results.json").write_text(json.dumps(rows, indent=1))
     print(f"\n{len(files)} real photos\n")
-    print(f"{'edit':18} {'flagged':>8} {'found right spot':>17}")
+    print_table(rows)
+
+
+def print_table(rows: list[dict]) -> None:
+    tf = "tf_score" in rows[0]
+    head = f"{'edit':18} {'ELA flagged':>12} {'ELA spot':>9}"
+    print(head + (f" {'TruFor flagged':>15} {'TruFor spot':>12}" if tf else ""))
     for kind in EDITS:
         sel = [r for r in rows if r["edit"] == kind]
-        fl = sum(r["flagged"] for r in sel)
-        lo = sum(r["localized"] for r in sel)
-        loc = "-" if kind.startswith("clean") else f"{lo}/{len(sel)}"
-        print(f"{kind:18} {fl:>4}/{len(sel):<3} {loc:>17}")
+        n = len(sel)
+        clean = kind.startswith("clean")
+
+        def frac(key: str) -> str:
+            return f"{sum(r[key] for r in sel)}/{n}"
+        line = f"{kind:18} {frac('flagged'):>12} {'-' if clean else frac('localized'):>9}"
+        if tf:
+            line += f" {frac('tf_flagged'):>15} {'-' if clean else frac('tf_localized'):>12}"
+        print(line)
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]), Path(sys.argv[2]))
+    main(Path(sys.argv[1]), Path(sys.argv[2]), "--trufor" in sys.argv[3:])
