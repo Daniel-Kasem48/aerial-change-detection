@@ -287,6 +287,9 @@ the VLM call (or provide `--regions-image-out /path/to/file.png`).
 
 ## Fraud Scanner web app
 
+> Research notes (what works, what fails, receipt forgery test, roadmap):
+> [docs/research-notes.md](docs/research-notes.md)
+
 A FastAPI service with a single-page UI that runs all single-image checks.
 
 ![Fraud Scanner UI](docs/images/fraud-scanner.png)
