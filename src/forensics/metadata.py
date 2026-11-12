@@ -109,6 +109,8 @@ def analyze_metadata(path: str | Path) -> MetadataReport:
     software = _text(exif.get(_SOFTWARE))
     modified = _text(exif.get(_DATETIME))
     captured = _text(exif.get_ifd(_EXIF_IFD).get(_DATETIME_ORIGINAL))
+    if make and model and model.lower().startswith(make.lower()):
+        make = None  # e.g. Make "Canon", Model "Canon EOS 70D"
     camera = " ".join(p for p in (make, model) if p) or None
 
     flags: list[Flag] = []

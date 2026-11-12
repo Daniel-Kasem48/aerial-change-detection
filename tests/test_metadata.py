@@ -103,3 +103,8 @@ def test_unreadable_file_raises(tmp_path: Path) -> None:
     bad.write_bytes(b"not an image")
     with pytest.raises(ValueError):
         analyze_metadata(bad)
+
+
+def test_camera_name_does_not_repeat_brand(tmp_path: Path) -> None:
+    path = _save_jpeg(tmp_path / "c.jpg", {MAKE: "Canon", MODEL: "Canon EOS 70D"})
+    assert analyze_metadata(path).camera == "Canon EOS 70D"
