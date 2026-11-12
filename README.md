@@ -285,6 +285,31 @@ the VLM call (or provide `--regions-image-out /path/to/file.png`).
 
 ---
 
+## Single-image forensics
+
+Checks that work on **one** photo, with no "before" image. Useful for fraud screening
+(for example, insurance claim photos).
+
+```python
+import cv2
+from src.forensics import analyze_metadata, perceptual_hash, FingerprintIndex
+
+# 1. Metadata: editing software, AI-generation markers, suspicious dates
+report = analyze_metadata("claim.jpg")
+print(report.risk, report.flag_codes)   # e.g. 0.6 ['editing_software']
+print(report.to_dict())                 # JSON-ready, each flag has a reason
+
+# 2. Duplicate / reused photos via perceptual hash
+index = FingerprintIndex.load("index.json")
+matches = index.find_similar(perceptual_hash(cv2.imread("claim.jpg")))
+# -> [Match(image_id='old-claim.jpg', distance=3)]  (<= 10 = same photo)
+```
+
+| Check | Flags | Notes |
+|---|---|---|
+| Metadata | `ai_generated_marker`, `editing_software`, `modified_after_capture`, `no_camera_metadata` | Reads EXIF, XMP (IPTC/C2PA `trainedAlgorithmicMedia`) and PNG text from diffusion tools. Metadata can be stripped or faked, so a clean report is not proof |
+| Fingerprint | near-duplicate matches | 64-bit DCT pHash; survives resize, recompression, brightness changes, small crops |
+
 ## Python API
 
 ```python
