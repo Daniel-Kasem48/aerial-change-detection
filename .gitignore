@@ -36,3 +36,8 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Data and generated files (kept locally, not in git)
+dataset/
+*.mp4
+*.pt
