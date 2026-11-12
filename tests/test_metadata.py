@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 from PIL import Image, PngImagePlugin
-
 from src.forensics.metadata import analyze_metadata
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # EXIF tag ids
 MAKE, MODEL, SOFTWARE, DATETIME = 0x010F, 0x0110, 0x0131, 0x0132

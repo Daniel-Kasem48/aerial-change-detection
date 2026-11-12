@@ -14,8 +14,7 @@ from pathlib import Path
 
 import cv2
 import pytest
-
-from src.forensics.trufor import TruForDetector, TruForUnavailable
+from src.forensics.trufor import TruForDetector, TruForUnavailableError
 
 TRUFOR_DIR = os.environ.get("TRUFOR_DIR", "")
 TRUFOR_WEIGHTS = os.environ.get("TRUFOR_WEIGHTS", "")
@@ -28,7 +27,7 @@ needs_model = pytest.mark.skipif(
 
 def test_missing_install_gives_clear_error(tmp_path: Path) -> None:
     detector = TruForDetector(trufor_dir=tmp_path / "nope", weights=tmp_path / "nope.pt")
-    with pytest.raises(TruForUnavailable):
+    with pytest.raises(TruForUnavailableError):
         detector.analyze(SAMPLES / "2.jpg")
 
 

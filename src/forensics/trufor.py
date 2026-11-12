@@ -36,7 +36,7 @@ REGION_THRESHOLD = 0.5   # map value above which a pixel counts as manipulated
 MIN_REGION_FRACTION = 0.002
 
 
-class TruForUnavailable(RuntimeError):
+class TruForUnavailableError(RuntimeError):
     """TruFor code or weights are not installed."""
 
 
@@ -73,7 +73,7 @@ class TruForDetector:
 
     def analyze(self, path: str | Path) -> TruForReport:
         import torch
-        import torch.nn.functional as F
+        import torch.nn.functional as F  # noqa: N812  (PyTorch convention)
 
         model = self._load()
         with Image.open(path) as img:
@@ -97,9 +97,9 @@ class TruForDetector:
         if self._model is not None:
             return self._model
         if not (self.trufor_dir / "lib" / "config" / "trufor_ph3.yaml").is_file():
-            raise TruForUnavailable(f"TruFor code not found in '{self.trufor_dir}' (set TRUFOR_DIR)")
+            raise TruForUnavailableError(f"TruFor code not found in '{self.trufor_dir}' (set TRUFOR_DIR)")
         if not self.weights.is_file():
-            raise TruForUnavailable(f"TruFor weights not found at '{self.weights}' (set TRUFOR_WEIGHTS)")
+            raise TruForUnavailableError(f"TruFor weights not found at '{self.weights}' (set TRUFOR_WEIGHTS)")
 
         import torch
 

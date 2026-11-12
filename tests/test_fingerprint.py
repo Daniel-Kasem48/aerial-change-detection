@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np
 import pytest
-
 from src.forensics.fingerprint import FingerprintIndex, hamming_distance, perceptual_hash
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _scene(seed: int) -> np.ndarray:

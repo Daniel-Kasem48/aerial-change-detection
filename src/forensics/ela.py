@@ -132,7 +132,7 @@ def _estimate_quality(quant: dict[int, Any]) -> int | None:
     table = np.asarray(quant[0], dtype=np.float64)
     scale = table.mean() / _STD_LUMA.mean() * 100.0
     quality = (200.0 - scale) / 2.0 if scale <= 100 else 5000.0 / scale
-    return int(round(np.clip(quality, 1, 100)))
+    return round(float(np.clip(quality, 1, 100)))
 
 
 def _block_scores(bgr: np.ndarray) -> np.ndarray:
@@ -145,7 +145,7 @@ def _block_scores(bgr: np.ndarray) -> np.ndarray:
 
     best = np.full((gray.shape[0] // BLOCK, gray.shape[1] // BLOCK), -np.inf)
     for q in QUALITIES:
-        ok, buf = cv2.imencode(".jpg", bgr, [cv2.IMWRITE_JPEG_QUALITY, q])
+        _ok, buf = cv2.imencode(".jpg", bgr, [cv2.IMWRITE_JPEG_QUALITY, q])
         resaved = cv2.imdecode(buf, cv2.IMREAD_COLOR)
         err = _block_mean(np.abs(gray - cv2.cvtColor(resaved, cv2.COLOR_BGR2GRAY).astype(np.float32)))
         if np.median(err) < MIN_MEDIAN_ERROR:

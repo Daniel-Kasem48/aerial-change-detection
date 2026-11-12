@@ -73,7 +73,7 @@ class FingerprintIndex:
         Path(path).write_text(json.dumps(data, indent=2))
 
     @classmethod
-    def load(cls, path: str | Path) -> "FingerprintIndex":
+    def load(cls, path: str | Path) -> FingerprintIndex:
         index = cls()
         for image_id, hex_hash in json.loads(Path(path).read_text()).items():
             index.add(image_id, int(hex_hash, 16))

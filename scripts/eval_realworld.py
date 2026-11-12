@@ -32,8 +32,8 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from src.forensics.ela import analyze_ela, render_heatmap  # noqa: E402
-from src.forensics.trufor import TruForDetector  # noqa: E402
+from src.forensics.ela import analyze_ela, render_heatmap
+from src.forensics.trufor import TruForDetector
 
 EDITS = ["clean_resave", "clean_messenger", "splice", "clone", "inpaint", "paint", "text",
          "splice_messenger"]
@@ -161,20 +161,21 @@ def main(photos: Path, out: Path, use_trufor: bool = False) -> None:
     print_table(rows)
 
 
+def _frac(rows: list[dict], key: str) -> str:
+    return f"{sum(r[key] for r in rows)}/{len(rows)}"
+
+
 def print_table(rows: list[dict]) -> None:
     tf = "tf_score" in rows[0]
     head = f"{'edit':18} {'ELA flagged':>12} {'ELA spot':>9}"
     print(head + (f" {'TruFor flagged':>15} {'TruFor spot':>12}" if tf else ""))
     for kind in EDITS:
         sel = [r for r in rows if r["edit"] == kind]
-        n = len(sel)
         clean = kind.startswith("clean")
-
-        def frac(key: str) -> str:
-            return f"{sum(r[key] for r in sel)}/{n}"
-        line = f"{kind:18} {frac('flagged'):>12} {'-' if clean else frac('localized'):>9}"
+        line = f"{kind:18} {_frac(sel, 'flagged'):>12} {'-' if clean else _frac(sel, 'localized'):>9}"
         if tf:
-            line += f" {frac('tf_flagged'):>15} {'-' if clean else frac('tf_localized'):>12}"
+            line += (f" {_frac(sel, 'tf_flagged'):>15}"
+                     f" {'-' if clean else _frac(sel, 'tf_localized'):>12}")
         print(line)
 
 

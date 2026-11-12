@@ -8,7 +8,6 @@ from pathlib import Path
 import cv2
 import numpy as np
 import pytest
-
 from src.forensics.ela import analyze_ela, render_heatmap
 
 PATCH = (192, 128, 96, 96)  # x, y, w, h of the pasted area
@@ -97,7 +96,7 @@ def test_png_is_not_applicable(tmp_path: Path) -> None:
 def test_heatmap_matches_image_size(spliced: Path) -> None:
     report = analyze_ela(spliced)
     assert report.heatmap.shape == (384, 384)
-    assert 0.0 <= float(report.heatmap.min()) and float(report.heatmap.max()) <= 1.0
+    assert float(report.heatmap.min()) >= 0.0 and float(report.heatmap.max()) <= 1.0
     overlay = render_heatmap(cv2.imread(str(spliced)), report.heatmap)
     assert overlay.shape == (384, 384, 3)
 
