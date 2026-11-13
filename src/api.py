@@ -131,7 +131,6 @@ def compare_objects(
             logger.warning("Alignment failed — comparing without alignment")
 
     if cfg.object_detector.class_agnostic_output:
-        import cv2
 
         detector = ChangeDetector(app_config=cfg)
         region_result = detector.compare(img_a_r, img_b_for_compare, method="combined")
