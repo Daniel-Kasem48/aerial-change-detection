@@ -67,3 +67,10 @@ def _metadata_reason(risk: float) -> str:
     if risk >= 0.5:
         return "Metadata shows editing software"
     return "Metadata is incomplete (often stripped by apps)"
+
+
+def not_checked() -> Verdict:
+    """No selected check could analyse the image: say so instead of 'low risk'."""
+    return Verdict("unknown", 0.0, [
+        "Not checked: none of the selected scans could analyse this image. "
+        "Tick Metadata or Earlier copies, or upload a JPEG for ELA and the document scan."])

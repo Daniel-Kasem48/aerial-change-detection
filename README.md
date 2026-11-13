@@ -310,11 +310,16 @@ python -m src.server --port 8000      # open http://localhost:8000
 | `GET /api/examples` | Example photos used by the UI |
 | `GET /docs` | OpenAPI / Swagger UI |
 
+Code layout: `src/server/main.py` (app factory), `routers/` (thin HTTP layer),
+`schemas.py` (typed responses, OpenAPI), `services/` (scan logic, store, verdict),
+`config.py` (settings from env: `SCANNER_DATA`, `TRUFOR_*`, `DTD_*`), `errors.py`
+(domain errors mapped to HTTP codes).
+
 In the UI you tick which scans to run (remembered per browser); model scans run
 one after another after the fast checks.
 
 The verdict combines metadata risk, duplicates, TruFor and DTD as independent
-evidence (`src/server/verdict.py`). ELA is shown but deliberately left out of
+evidence (`src/server/services/verdict.py`). ELA is shown but deliberately left out of
 the score because it is unreliable on real photos. Uploads go to `data/`
 (`SCANNER_DATA` to change), only the last 200 are kept.
 

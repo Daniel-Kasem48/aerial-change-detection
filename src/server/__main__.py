@@ -6,7 +6,7 @@ import argparse
 
 import uvicorn
 
-from .app import create_app
+from .main import create_app
 
 
 def main() -> None:

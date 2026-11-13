@@ -12,8 +12,9 @@ from fastapi.testclient import TestClient
 from src.forensics.dtd import DtdReport
 from src.forensics.dtd import Region as DtdRegion
 from src.forensics.trufor import Region, TruForReport
-from src.server.app import Settings, create_app
-from src.server.verdict import combine
+from src.server.config import Settings
+from src.server.main import create_app
+from src.server.services.verdict import combine
 
 SAMPLES = Path(__file__).parent.parent / "samples"
 
