@@ -189,7 +189,7 @@ footer p { margin: 0 0 6px; }
     <div class="stats">
       <div class="card stat"><div class="n">5</div><div class="l">checks, chosen per scan</div></div>
       <div class="card stat"><div class="n">112</div><div class="l">benchmark images from 14 real camera photos</div></div>
-      <div class="card stat"><div class="n">4</div><div class="l">receipt fraud scenarios</div></div>
+      <div class="card stat"><div class="n">3</div><div class="l">receipt fraud scenarios</div></div>
       <div class="card stat"><div class="n">166</div><div class="l">automated tests</div></div>
     </div>
   </section>
@@ -243,31 +243,11 @@ footer p { margin: 0 0 6px; }
     <!-- 2 -->
     <article class="card case">
       <div class="media">
-        <img src="showcase/receipt_telegram_dtd_zoom.jpg" alt="Forged totals after messenger recompression, DTD heatmap empty" loading="lazy" style="border-radius:12px">
-        <div class="cap">DTD heatmap after the forged receipt was sent through a messenger: nothing left to see.</div>
-      </div>
-      <div class="body">
-        <div class="num">Case 2 · receipt · limit</div>
-        <h3>The same forgery after WhatsApp / Telegram</h3>
-        <span class="badge missed">✗ Missed</span>
-        <p style="margin-top:12px">Messengers resize and recompress every image. That second compression wipes the subtle traces all pixel methods rely on.</p>
-        <ul class="rows">
-          <li><b>DTD</b><span class="ko">peak 0.43, below the threshold</span></li>
-          <li><b>TruFor</b><span class="ko">0.10</span></li>
-          <li><b>ELA</b><span class="ko">no region</span></li>
-        </ul>
-        <div class="lesson">What survives compression: asking for the original file, in-app capture, duplicate search, and checking the content itself (items vs total, VAT).</div>
-      </div>
-    </article>
-
-    <!-- 3 -->
-    <article class="card case">
-      <div class="media">
         <img src="showcase/receipt_ai.jpg" alt="Receipt edited with an AI image tool, extra line 2,69 and total 14,07" loading="lazy" style="border-radius:12px">
         <div class="cap">Edited with an AI image tool: an extra line "2,69 B" without a product name, totals and VAT changed consistently.</div>
       </div>
       <div class="body">
-        <div class="num">Case 3 · receipt · AI edit</div>
+        <div class="num">Case 2 · receipt · AI edit</div>
         <h3>Receipt edited with ChatGPT's image tool</h3>
         <span class="badge caught">✓ Caught via content credentials</span>
         <p style="margin-top:12px">The arithmetic is consistent (items sum to 14,07; 13,15 net + 0,92 VAT), so a simple math check would pass it. The model redraws the whole image, so there is no pasted seam either.</p>
@@ -282,14 +262,14 @@ footer p { margin: 0 0 6px; }
       </div>
     </article>
 
-    <!-- 4 -->
+    <!-- 3 -->
     <article class="card case">
       <div class="media" style="align-items:center;text-align:center;padding:36px 20px">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
         <div class="cap" style="margin-top:8px">Next real-world test</div>
       </div>
       <div class="body">
-        <div class="num">Case 4 · receipt · next</div>
+        <div class="num">Case 3 · receipt · next</div>
         <h3>Price changed with a pen, then photographed</h3>
         <span class="badge next">→ Next</span>
         <p style="margin-top:12px">The photo is genuine; the paper is forged. Metadata, ELA, TruFor and DTD all look for digital editing, so they will report a clean image. This is the most realistic case and needs different signals:</p>
