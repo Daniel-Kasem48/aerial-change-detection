@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fraud Scanner · Tested Use Cases</title>
+<meta name="description" content="Single-image fraud detection for claim photos and receipts: what was tested, what was caught, and where every method fails.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f7fb; --surface: #ffffff; --surface-2: #f1f3f8; --border: #e3e6ee;
+  --text: #121826; --muted: #5b6475; --faint: #8b93a5;
+  --accent: #4f46e5; --accent-soft: #eef0ff;
+  --low: #16a34a; --low-soft: #e8f7ee; --medium: #b45309; --medium-soft: #fdf3e2;
+  --high: #dc2626; --high-soft: #fdeceb;
+  --series-trufor: #2a78d6; --series-ela: #eb6834;
+  --shadow: 0 1px 2px rgba(16,24,40,.04), 0 4px 16px rgba(16,24,40,.06);
+  --radius: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0e14; --surface: #131720; --surface-2: #1a1f2b; --border: #252b38;
+    --text: #e7eaf0; --muted: #a2aabb; --faint: #737c8f;
+    --accent: #8b85ff; --accent-soft: #1e1d3a;
+    --low: #34d399; --low-soft: #0f2a20; --medium: #fbbf24; --medium-soft: #2d2410;
+    --high: #f87171; --high-soft: #2f1416;
+    --series-trufor: #3987e5; --series-ela: #d95926;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0e14; --surface: #131720; --surface-2: #1a1f2b; --border: #252b38;
+  --text: #e7eaf0; --muted: #a2aabb; --faint: #737c8f;
+  --accent: #8b85ff; --accent-soft: #1e1d3a;
+  --low: #34d399; --low-soft: #0f2a20; --medium: #fbbf24; --medium-soft: #2d2410;
+  --high: #f87171; --high-soft: #2f1416;
+  --series-trufor: #3987e5; --series-ela: #d95926;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+img { max-width: 100%; display: block; }
+a { color: var(--accent); }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+header.top { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--bg) 85%, transparent); border-bottom: 1px solid var(--border); }
+.bar { display: flex; align-items: center; gap: 12px; height: 60px; }
+.logo { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--accent), #06b6d4); color: #fff; }
+.bar b { font-size: 16px; letter-spacing: -.01em; }
+.bar nav { margin-left: auto; display: flex; gap: 18px; font-size: 14px; }
+.bar nav a { color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--text); }
+@media (max-width: 720px) { .bar nav .hide-sm { display: none; } }
+
+.hero { padding: 56px 0 28px; }
+.eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.hero h1 { font-size: clamp(30px, 5vw, 50px); line-height: 1.08; letter-spacing: -.035em; margin: 10px 0 16px; max-width: 820px; }
+.hero p.lead { font-size: clamp(16px, 2vw, 19px); color: var(--muted); max-width: 720px; margin: 0 0 24px; }
+.cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 11px; font-weight: 600;
+  font-size: 14.5px; text-decoration: none; border: 1px solid var(--border); color: var(--text); background: var(--surface); }
+.btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 34px 0 10px; }
+@media (max-width: 820px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+.stat { padding: 18px; }
+.stat .n { font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+.stat .l { font-size: 13.5px; color: var(--muted); margin-top: 4px; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+section { padding: 48px 0 8px; }
+h2 { font-size: clamp(24px, 3vw, 32px); letter-spacing: -.025em; margin: 0 0 8px; }
+.sub { color: var(--muted); margin: 0 0 24px; max-width: 760px; }
+
+.checks { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+@media (max-width: 980px) { .checks { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .checks { grid-template-columns: 1fr; } }
+.check { padding: 16px; }
+.check .k { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.check h3 { margin: 4px 0 6px; font-size: 16px; }
+.check p { margin: 0; font-size: 14px; color: var(--muted); }
+
+.case { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 0; margin-bottom: 22px; overflow: hidden; }
+@media (max-width: 900px) { .case { grid-template-columns: 1fr; } }
+.case .media { background: var(--surface-2); padding: 16px; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+.case .body { padding: 22px 24px; }
+.case h3 { font-size: 21px; letter-spacing: -.015em; margin: 6px 0 8px; }
+.case p { margin: 0 0 12px; color: var(--muted); font-size: 15px; }
+.num { font-size: 12.5px; font-weight: 700; color: var(--faint); letter-spacing: .06em; text-transform: uppercase; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; padding: 4px 10px; border-radius: 999px; }
+.badge.caught { color: var(--low); background: var(--low-soft); }
+.badge.missed { color: var(--high); background: var(--high-soft); }
+.badge.partial { color: var(--medium); background: var(--medium-soft); }
+.badge.next { color: var(--accent); background: var(--accent-soft); }
+.rows { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 6px; }
+.rows li { display: grid; grid-template-columns: 132px 1fr; gap: 10px; font-size: 14px; padding: 8px 10px;
+  background: var(--surface-2); border-radius: 10px; }
+.rows li b { font-weight: 600; }
+.ok { color: var(--low); } .ko { color: var(--high); } .na { color: var(--faint); }
+.lesson { font-size: 14px; border-left: 3px solid var(--accent); padding: 8px 12px; background: var(--accent-soft);
+  border-radius: 0 10px 10px 0; color: var(--text); margin-top: 12px; }
+
+.viewer { position: relative; border-radius: 12px; overflow: hidden; user-select: none; background: var(--border); }
+.viewer img { width: 100%; height: auto; }
+.viewer .top { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--cut, 50%)); }
+.viewer .top img { width: 100%; height: 100%; object-fit: cover; }
+.viewer .handle { position: absolute; top: 0; bottom: 0; left: var(--cut, 50%); width: 2px; background: #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.25); pointer-events: none; }
+.viewer .handle::after { content: "⇆"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #111; display: grid; place-items: center;
+  font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+.viewer input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+.viewer .tag { position: absolute; top: 10px; font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+  background: rgba(0,0,0,.6); color: #fff; pointer-events: none; }
+.viewer .tag.l { left: 10px; } .viewer .tag.r { right: 10px; }
+.cap { font-size: 12.5px; color: var(--faint); text-align: center; }
+.trip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.trip figure { margin: 0; }
+.trip img { border-radius: 8px; width: 100%; }
+.trip figcaption { font-size: 12px; color: var(--muted); text-align: center; margin-top: 4px; }
+
+/* chart */
+.chart { padding: 20px; }
+.legend { display: flex; gap: 18px; font-size: 13.5px; color: var(--muted); margin-bottom: 14px; flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.bars { display: grid; gap: 14px; }
+.brow { display: grid; grid-template-columns: 210px 1fr; gap: 12px; align-items: center; }
+@media (max-width: 640px) { .brow { grid-template-columns: 1fr; gap: 4px; } }
+.brow .lbl { font-size: 14px; color: var(--text); }
+.pair { display: grid; gap: 4px; }
+.track { position: relative; height: 16px; border-radius: 4px; background: var(--surface-2); }
+.fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; min-width: 2px; }
+.val { position: absolute; top: -1px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.axis { display: grid; grid-template-columns: 210px 1fr; gap: 12px; font-size: 12px; color: var(--faint); margin-top: 6px; }
+@media (max-width: 640px) { .axis { grid-template-columns: 1fr; } .axis span:first-child { display: none; } }
+.axis .ticks { display: flex; justify-content: space-between; }
+.tip { position: fixed; z-index: 20; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12.5px;
+  padding: 6px 9px; border-radius: 8px; opacity: 0; transition: opacity .1s; max-width: 240px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+th { font-size: 12.5px; color: var(--faint); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.two { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; }
+@media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
+details summary { cursor: pointer; color: var(--muted); font-size: 14px; margin-top: 14px; }
+
+.lessons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 900px) { .lessons { grid-template-columns: 1fr; } }
+.lessons .card { padding: 18px; }
+.lessons h3 { margin: 0 0 6px; font-size: 16px; }
+.lessons p { margin: 0; font-size: 14.5px; color: var(--muted); }
+.shot { margin-top: 18px; overflow: hidden; }
+pre { margin: 0; padding: 14px; border-radius: 12px; background: var(--surface-2); overflow: auto;
+  font: 13px/1.55 "JetBrains Mono", ui-monospace, monospace; }
+footer { margin-top: 56px; padding: 26px 0 40px; border-top: 1px solid var(--border); color: var(--faint); font-size: 13.5px; }
+footer p { margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <div class="logo" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg></div>
+    <b>Fraud Scanner</b>
+    <nav>
+      <a href="#cases">Use cases</a>
+      <a href="#benchmark" class="hide-sm">Benchmark</a>
+      <a href="#lessons" class="hide-sm">Lessons</a>
+      <a href="https://github.com/Daniel-Kasem48/aerial-change-detection">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Single-image forensics · tested on real photos and receipts</div>
+    <h1>Was this claim photo or receipt edited? What works, and where it breaks.</h1>
+    <p class="lead">A FastAPI service with a web UI that combines five checks: metadata and AI credentials, duplicate
+      search, error level analysis, the TruFor photo-forgery network and the DocTamper network for edited text.
+      Below are the cases we actually ran, with the real heatmaps and the honest results, including the misses.</p>
+    <div class="cta">
+      <a class="btn primary" href="#cases">See the use cases</a>
+      <a class="btn" href="https://github.com/Daniel-Kasem48/aerial-change-detection">Source on GitHub</a>
+    </div>
+    <div class="stats">
+      <div class="card stat"><div class="n">5</div><div class="l">checks, chosen per scan</div></div>
+      <div class="card stat"><div class="n">112</div><div class="l">benchmark images from 14 real camera photos</div></div>
+      <div class="card stat"><div class="n">8</div><div class="l">hand-built fraud scenarios</div></div>
+      <div class="card stat"><div class="n">166</div><div class="l">automated tests</div></div>
+    </div>
+  </section>
+
+  <section id="checks">
+    <h2>The five checks</h2>
+    <p class="sub">Fast checks answer in about a second; the two neural networks run on request. The verdict combines
+      them as independent evidence and says "Not checked" when none of the chosen scans could judge the image.</p>
+    <div class="checks">
+      <div class="card check"><div class="k">instant</div><h3>Metadata</h3><p>Editing software, AI markers such as C2PA "trainedAlgorithmicMedia", suspicious dates.</p></div>
+      <div class="card check"><div class="k">instant</div><h3>Earlier copies</h3><p>64-bit perceptual fingerprint; survives resizing, recompression and small crops.</p></div>
+      <div class="card check"><div class="k">~1 s</div><h3>Error level analysis</h3><p>Areas with a different JPEG save history. Shown as a visual aid only.</p></div>
+      <div class="card check"><div class="k">~30 s on CPU</div><h3>TruFor</h3><p>Trained photo-forgery detector (CVPR 2023): score plus a map of edited areas.</p></div>
+      <div class="card check"><div class="k">~40 s on CPU</div><h3>DocTamper DTD</h3><p>Trained on edited text; reads the JPEG's DCT coefficients (CVPR 2023).</p></div>
+    </div>
+  </section>
+
+  <section id="cases">
+    <h2>Use cases we tested</h2>
+    <p class="sub">Drag across each photo to compare it with the heatmap (warm colours = suspicious). Every image and
+      number below is real output of the scanner.</p>
+
+    <!-- 1 -->
+    <article class="card case">
+      <div class="media">
+        <div class="viewer"><img src="showcase/pasted_orig.jpg" alt="Photo with a pasted crop from another photo" loading="lazy">
+          <div class="top"><img src="showcase/pasted_trufor.jpg" alt="TruFor heatmap" loading="lazy"></div>
+          <div class="handle"></div><span class="tag l">Photo</span><span class="tag r">TruFor</span>
+          <input type="range" min="0" max="100" value="55" aria-label="Compare photo and heatmap"></div>
+      </div>
+      <div class="body">
+        <div class="num">Case 1 · claim photo</div>
+        <h3>Area pasted in from another photo</h3>
+        <span class="badge caught">✓ Caught</span>
+        <p style="margin-top:12px">A 400×300 crop from a different photo was pasted onto a table photo and saved like a normal edit.</p>
+        <ul class="rows">
+          <li><b>TruFor</b><span class="ok">score 1.00, marks 7.3% of the image: exactly the pasted area</span></li>
+          <li><b>ELA</b><span class="ok">1 region at the pasted crop</span></li>
+          <li><b>Verdict</b><span>High risk, 99.9%</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- 2 -->
+    <article class="card case">
+      <div class="media">
+        <div class="viewer"><img src="showcase/clean_orig.jpg" alt="Untouched photo" loading="lazy">
+          <div class="top"><img src="showcase/clean_trufor.jpg" alt="TruFor heatmap" loading="lazy"></div>
+          <div class="handle"></div><span class="tag l">Photo</span><span class="tag r">TruFor</span>
+          <input type="range" min="0" max="100" value="55" aria-label="Compare photo and heatmap"></div>
+      </div>
+      <div class="body">
+        <div class="num">Case 2 · control</div>
+        <h3>Untouched photo: no false alarm</h3>
+        <span class="badge caught">✓ Correctly clean</span>
+        <p style="margin-top:12px">The same scene without any edit. A fraud tool that flags honest customers costs as much trust as one that misses fraud.</p>
+        <ul class="rows">
+          <li><b>TruFor</b><span class="ok">score 0.15, not suspicious</span></li>
+          <li><b>ELA</b><span class="ok">no region</span></li>
+          <li><b>Verdict</b><span>Low risk (only "no camera metadata", normal for messenger photos)</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- 3 -->
+    <article class="card case">
+      <div class="media">
+        <div class="viewer"><img src="showcase/painted_orig.jpg" alt="Photo with painted scratches and text" loading="lazy">
+          <div class="top"><img src="showcase/painted_ela.jpg" alt="ELA heatmap" loading="lazy"></div>
+          <div class="handle"></div><span class="tag l">Photo</span><span class="tag r">ELA</span>
+          <input type="range" min="0" max="100" value="55" aria-label="Compare photo and heatmap"></div>
+      </div>
+      <div class="body">
+        <div class="num">Case 3 · claim photo</div>
+        <h3>Painted "damage" and added text</h3>
+        <span class="badge caught">✓ Caught</span>
+        <p style="margin-top:12px">Fake scratches drawn on a surface and the word "PAID" added. ELA works here because the photo had been compressed harder before the edit than after it.</p>
+        <ul class="rows">
+          <li><b>ELA</b><span class="ok">3 regions: the scratches and the text</span></li>
+          <li><b>Earlier copies</b><span class="ok">matches the unedited photo submitted before</span></li>
+          <li><b>Verdict</b><span>Medium risk; ELA is shown but does not count (see benchmark)</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- 4 -->
+    <article class="card case">
+      <div class="media">
+        <div class="viewer"><img src="showcase/twin_orig.jpg" alt="Photo with glasses copied from a twin photo" loading="lazy">
+          <div class="top"><img src="showcase/twin_ela.jpg" alt="ELA heatmap" loading="lazy"></div>
+          <div class="handle"></div><span class="tag l">Photo</span><span class="tag r">ELA</span>
+          <input type="range" min="0" max="100" value="55" aria-label="Compare photo and heatmap"></div>
+      </div>
+      <div class="body">
+        <div class="num">Case 4 · claim photo</div>
+        <h3>Object copied from a second photo of the same scene</h3>
+        <span class="badge partial">◐ Caught by duplicates, not by pixels</span>
+        <p style="margin-top:12px">Glasses were copied from a second shot of the same table. Both photos went through the same messenger compression, so the pasted area has the same save history.</p>
+        <ul class="rows">
+          <li><b>ELA</b><span class="ko">no region (same compression history)</span></li>
+          <li><b>Earlier copies</b><span class="ok">near-copy of the earlier upload (4 of 64 bits apart)</span></li>
+          <li><b>Verdict</b><span>Medium risk, driven by the duplicate match</span></li>
+        </ul>
+        <div class="lesson">No single detector is enough: here the cheap fingerprint check caught what pixel forensics could not.</div>
+      </div>
+    </article>
+
+    <!-- 5 -->
+    <article class="card case">
+      <div class="media">
+        <div class="viewer"><img src="showcase/receipt_forged.jpg" alt="Receipt with the total changed from 13,07 to 18,07" loading="lazy">
+          <div class="top"><img src="showcase/receipt_forged_dtd.jpg" alt="DTD heatmap" loading="lazy"></div>
+          <div class="handle"></div><span class="tag l">Receipt</span><span class="tag r">DTD</span>
+          <input type="range" min="0" max="100" value="55" aria-label="Compare receipt and heatmap"></div>
+        <div class="trip">
+          <figure><img src="showcase/receipt_orig_dtd_zoom.jpg" alt="Original receipt totals, DTD clean" loading="lazy"><figcaption>Original 13,07: clean</figcaption></figure>
+          <figure><img src="showcase/receipt_forged_dtd_zoom.jpg" alt="Forged totals, both 8s marked" loading="lazy"><figcaption>Forged 18,07: both "8"s marked</figcaption></figure>
+          <figure><img src="showcase/receipt_telegram_dtd_zoom.jpg" alt="Forged and re-sent, nothing marked" loading="lazy"><figcaption>Forged, then messenger: missed</figcaption></figure>
+        </div>
+      </div>
+      <div class="body">
+        <div class="num">Case 5 · receipt</div>
+        <h3>One digit changed: total 13,07 → 18,07</h3>
+        <span class="badge caught">✓ Caught by the document model</span>
+        <p style="margin-top:12px">A real supermarket receipt photo. An "8" from another price was copied over the "3" in both totals, the old digit removed, and the file saved once, as a phone editor would.</p>
+        <ul class="rows">
+          <li><b>DTD</b><span class="ok">both edited digits marked exactly (peak 1.00); untouched receipt stays clean</span></li>
+          <li><b>TruFor</b><span class="ko">missed (0.12): two digits are ~0.1% of the image</span></li>
+          <li><b>ELA</b><span class="ok">found both digits, but cannot be trusted alone</span></li>
+          <li><b>Verdict</b><span>High risk, 88%</span></li>
+        </ul>
+        <div class="lesson">General photo models miss tiny text edits; a model trained on edited documents finds them.</div>
+      </div>
+    </article>
+
+    <!-- 6 -->
+    <article class="card case">
+      <div class="media">
+        <img src="showcase/receipt_telegram_dtd_zoom.jpg" alt="Forged totals after messenger recompression, DTD heatmap empty" loading="lazy" style="border-radius:12px">
+        <div class="cap">DTD heatmap after the forged receipt was sent through a messenger: nothing left to see.</div>
+      </div>
+      <div class="body">
+        <div class="num">Case 6 · receipt · limit</div>
+        <h3>The same forgery after WhatsApp / Telegram</h3>
+        <span class="badge missed">✗ Missed</span>
+        <p style="margin-top:12px">Messengers resize and recompress every image. That second compression wipes the subtle traces all pixel methods rely on.</p>
+        <ul class="rows">
+          <li><b>DTD</b><span class="ko">peak 0.43, below the threshold</span></li>
+          <li><b>TruFor</b><span class="ko">0.10</span></li>
+          <li><b>ELA</b><span class="ko">no region</span></li>
+        </ul>
+        <div class="lesson">What survives compression: asking for the original file, in-app capture, duplicate search, and checking the content itself (items vs total, VAT).</div>
+      </div>
+    </article>
+
+    <!-- 7 -->
+    <article class="card case">
+      <div class="media">
+        <img src="showcase/receipt_ai.jpg" alt="Receipt edited with an AI image tool, extra line 2,69 and total 14,07" loading="lazy" style="border-radius:12px">
+        <div class="cap">Edited with an AI image tool: an extra line "2,69 B" without a product name, totals and VAT changed consistently.</div>
+      </div>
+      <div class="body">
+        <div class="num">Case 7 · receipt · AI edit</div>
+        <h3>Receipt edited with ChatGPT's image tool</h3>
+        <span class="badge caught">✓ Caught via content credentials</span>
+        <p style="margin-top:12px">The arithmetic is consistent (items sum to 14,07; 13,15 net + 0,92 VAT), so a simple math check would pass it. The model redraws the whole image, so there is no pasted seam either.</p>
+        <ul class="rows">
+          <li><b>Metadata</b><span class="ok">OpenAI C2PA credential, "trainedAlgorithmicMedia" → AI-generated</span></li>
+          <li><b>Earlier copies</b><span class="ok">matches the original receipt uploaded before</span></li>
+          <li><b>TruFor</b><span class="ko">0.16, missed</span></li>
+          <li><b>ELA / DTD</b><span class="na">not applicable: the file is a PNG</span></li>
+          <li><b>Verdict</b><span>High risk, 98%</span></li>
+        </ul>
+        <div class="lesson">A screenshot strips the credential. What still betrays it: the same TSE signature and timestamp as the original but a different total, and an item line without a name.</div>
+      </div>
+    </article>
+
+    <!-- 8 -->
+    <article class="card case">
+      <div class="media" style="align-items:center;text-align:center;padding:36px 20px">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+        <div class="cap" style="margin-top:8px">Next real-world test</div>
+      </div>
+      <div class="body">
+        <div class="num">Case 8 · receipt · next</div>
+        <h3>Price changed with a pen, then photographed</h3>
+        <span class="badge next">→ Next</span>
+        <p style="margin-top:12px">The photo is genuine; the paper is forged. Metadata, ELA, TruFor and DTD all look for digital editing, so they will report a clean image. This is the most realistic case and needs different signals:</p>
+        <ul class="rows">
+          <li><b>Ink colour</b><span>thermal print is neutral grey; a blue pen has colour</span></li>
+          <li><b>Font / strokes</b><span>dot-matrix digits vs handwriting</span></li>
+          <li><b>Consistency</b><span>OCR, then items vs total, net + VAT = gross, TSE plausibility</span></li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <section id="benchmark">
+    <h2>Benchmark on real camera photos</h2>
+    <p class="sub">14 real camera photos from Wikimedia Commons (car damage, windshields, water damage, interiors), each
+      as 2 clean copies and 6 realistic edits: 112 images. "Located" means a detected region overlaps the edit.</p>
+    <div class="two">
+      <div class="card chart">
+        <div class="legend" aria-hidden="true">
+          <span><i class="sw" style="background:var(--series-trufor)"></i>TruFor</span>
+          <span><i class="sw" style="background:var(--series-ela)"></i>ELA</span>
+        </div>
+        <div class="bars" id="bars" role="img" aria-label="Edits located out of 14 per edit type, TruFor versus ELA"></div>
+        <div class="axis"><span></span><div class="ticks"><span>0</span><span>7</span><span>14 photos</span></div></div>
+        <details><summary>Show as table</summary>
+          <table id="barsTable"><thead><tr><th>Edit</th><th>TruFor located</th><th>ELA located</th></tr></thead><tbody></tbody></table>
+        </details>
+      </div>
+      <div class="card chart">
+        <h3 style="margin:0 0 4px;font-size:16px">Automatic yes/no decision (TruFor)</h3>
+        <p style="margin:0 0 12px;color:var(--muted);font-size:14px">The heatmap also marks small areas on 19 of 28 clean copies, so a fully automatic decision is a trade-off:</p>
+        <table>
+          <thead><tr><th>False alarms on clean</th><th>Edits caught</th></tr></thead>
+          <tbody>
+            <tr><td>0 / 28 (0%)</td><td>20 / 84 (24%)</td></tr>
+            <tr><td>1 / 28 (4%)</td><td>26 / 84 (31%)</td></tr>
+            <tr><td>3 / 28 (11%)</td><td>36 / 84 (43%)</td></tr>
+            <tr><td>5 / 28 (18%)</td><td>46 / 84 (55%)</td></tr>
+          </tbody>
+        </table>
+        <p style="margin:12px 0 0;color:var(--muted);font-size:13.5px">ELA raised false alarms on 6 of 28 clean copies and located 0 of 84 edits on these
+          high-quality camera photos, which is why it is excluded from the verdict. Small sample, rule tuned on the same photos: indicative only.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="lessons">
+    <h2>What we learned</h2>
+    <div class="lessons">
+      <div class="card"><h3>Layer the checks</h3><p>Each method failed somewhere another one succeeded: fingerprints caught the twin-photo copy, the document model caught the digit edit, metadata caught the AI edit.</p></div>
+      <div class="card"><h3>Compression is the enemy</h3><p>After a messenger re-save, every pixel method missed the forged receipt. Ask for originals or use in-app capture; check content, not only pixels.</p></div>
+      <div class="card"><h3>Measure false alarms</h3><p>"Located 63%" sounded great until clean photos showed regions too. Honest yes/no numbers: 24% at zero false alarms. Reviewers get heatmaps, not just a score.</p></div>
+    </div>
+
+    <div class="card shot">
+      <img src="images/fraud-scanner.png" alt="Fraud Scanner web UI showing a heatmap comparison and a high-risk verdict" loading="lazy">
+    </div>
+    <div class="card" style="margin-top:18px;padding:18px">
+      <h3 style="margin:0 0 10px;font-size:16px">Run it locally</h3>
+<pre>git clone https://github.com/Daniel-Kasem48/aerial-change-detection
+cd aerial-change-detection && pip install -e ".[server]"
+python -m src.server --port 8000      # http://localhost:8000
+# optional model scans: set TRUFOR_DIR/TRUFOR_WEIGHTS and DTD_DIR/DTD_WEIGHTS (see README)</pre>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>Built with FastAPI, OpenCV and PyTorch. Research notes:
+    <a href="https://github.com/Daniel-Kasem48/aerial-change-detection/blob/main/docs/research-notes.md">docs/research-notes.md</a>.</p>
+  <p>Deep scans use <a href="https://grip-unina.github.io/TruFor">TruFor</a> (Guillaro et al., CVPR 2023, GRIP-UNINA) and
+    <a href="https://github.com/qcf-568/DocTamper">DocTamper DTD</a> (Qu et al., CVPR 2023), both for non-commercial use and not
+    included in the repository. Benchmark photos from Wikimedia Commons. Receipt images are cropped; results are signals for a human reviewer, not proof.</p>
+</footer>
+
+<div class="tip" id="tip" role="tooltip"></div>
+<script>
+// before/after sliders
+document.querySelectorAll(".viewer input").forEach(r => {
+  const v = r.closest(".viewer");
+  const set = () => v.style.setProperty("--cut", r.value + "%");
+  r.addEventListener("input", set); set();
+});
+
+// benchmark bars (located out of 14)
+const DATA = [
+  ["Pasted from another photo", 10, 0], ["Cloned within the photo", 11, 0], ["Object removed", 13, 0],
+  ["Painted scratches", 2, 0], ["Added text", 7, 0], ["Pasted, then messenger", 10, 0],
+];
+const N = 14, bars = document.getElementById("bars"), tip = document.getElementById("tip");
+const tbody = document.querySelector("#barsTable tbody");
+for (const [label, tf, ela] of DATA) {
+  const row = document.createElement("div"); row.className = "brow";
+  const mk = (v, color, name) => `<div class="track" data-tip="${name}: ${v} of ${N} located (${Math.round(v / N * 100)}%)">
+      <div class="fill" style="width:${v / N * 100}%;background:var(--${color})"></div>
+      <span class="val" style="left:calc(${v / N * 100}% + 6px)">${v}</span></div>`;
+  row.innerHTML = `<div class="lbl">${label}</div><div class="pair">${mk(tf, "series-trufor", "TruFor")}${mk(ela, "series-ela", "ELA")}</div>`;
+  bars.appendChild(row);
+  tbody.insertAdjacentHTML("beforeend", `<tr><td>${label}</td><td>${tf} / ${N}</td><td>${ela} / ${N}</td></tr>`);
+}
+bars.addEventListener("mousemove", (e) => {
+  const t = e.target.closest(".track");
+  if (!t) { tip.style.opacity = 0; return; }
+  tip.textContent = t.dataset.tip; tip.style.opacity = 1;
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - 250) + "px"; tip.style.top = (e.clientY + 14) + "px";
+});
+bars.addEventListener("mouseleave", () => { tip.style.opacity = 0; });
+</script>
+</body>
+</html>
