@@ -189,7 +189,7 @@ footer p { margin: 0 0 6px; }
     <div class="stats">
       <div class="card stat"><div class="n">5</div><div class="l">checks, chosen per scan</div></div>
       <div class="card stat"><div class="n">112</div><div class="l">benchmark images from 14 real camera photos</div></div>
-      <div class="card stat"><div class="n">8</div><div class="l">hand-built fraud scenarios</div></div>
+      <div class="card stat"><div class="n">4</div><div class="l">receipt fraud scenarios</div></div>
       <div class="card stat"><div class="n">166</div><div class="l">automated tests</div></div>
     </div>
   </section>
@@ -209,95 +209,10 @@ footer p { margin: 0 0 6px; }
 
   <section id="cases">
     <h2>Use cases we tested</h2>
-    <p class="sub">Drag across each photo to compare it with the heatmap (warm colours = suspicious). Every image and
+    <p class="sub">Drag across each receipt to compare it with the heatmap (warm colours = suspicious). Every image and
       number below is real output of the scanner.</p>
 
     <!-- 1 -->
-    <article class="card case">
-      <div class="media">
-        <div class="viewer"><img src="showcase/pasted_orig.jpg" alt="Photo with a pasted crop from another photo" loading="lazy">
-          <div class="top"><img src="showcase/pasted_trufor.jpg" alt="TruFor heatmap" loading="lazy"></div>
-          <div class="handle"></div><span class="tag l">Photo</span><span class="tag r">TruFor</span>
-          <input type="range" min="0" max="100" value="55" aria-label="Compare photo and heatmap"></div>
-      </div>
-      <div class="body">
-        <div class="num">Case 1 · claim photo</div>
-        <h3>Area pasted in from another photo</h3>
-        <span class="badge caught">✓ Caught</span>
-        <p style="margin-top:12px">A 400×300 crop from a different photo was pasted onto a table photo and saved like a normal edit.</p>
-        <ul class="rows">
-          <li><b>TruFor</b><span class="ok">score 1.00, marks 7.3% of the image: exactly the pasted area</span></li>
-          <li><b>ELA</b><span class="ok">1 region at the pasted crop</span></li>
-          <li><b>Verdict</b><span>High risk, 99.9%</span></li>
-        </ul>
-      </div>
-    </article>
-
-    <!-- 2 -->
-    <article class="card case">
-      <div class="media">
-        <div class="viewer"><img src="showcase/clean_orig.jpg" alt="Untouched photo" loading="lazy">
-          <div class="top"><img src="showcase/clean_trufor.jpg" alt="TruFor heatmap" loading="lazy"></div>
-          <div class="handle"></div><span class="tag l">Photo</span><span class="tag r">TruFor</span>
-          <input type="range" min="0" max="100" value="55" aria-label="Compare photo and heatmap"></div>
-      </div>
-      <div class="body">
-        <div class="num">Case 2 · control</div>
-        <h3>Untouched photo: no false alarm</h3>
-        <span class="badge caught">✓ Correctly clean</span>
-        <p style="margin-top:12px">The same scene without any edit. A fraud tool that flags honest customers costs as much trust as one that misses fraud.</p>
-        <ul class="rows">
-          <li><b>TruFor</b><span class="ok">score 0.15, not suspicious</span></li>
-          <li><b>ELA</b><span class="ok">no region</span></li>
-          <li><b>Verdict</b><span>Low risk (only "no camera metadata", normal for messenger photos)</span></li>
-        </ul>
-      </div>
-    </article>
-
-    <!-- 3 -->
-    <article class="card case">
-      <div class="media">
-        <div class="viewer"><img src="showcase/painted_orig.jpg" alt="Photo with painted scratches and text" loading="lazy">
-          <div class="top"><img src="showcase/painted_ela.jpg" alt="ELA heatmap" loading="lazy"></div>
-          <div class="handle"></div><span class="tag l">Photo</span><span class="tag r">ELA</span>
-          <input type="range" min="0" max="100" value="55" aria-label="Compare photo and heatmap"></div>
-      </div>
-      <div class="body">
-        <div class="num">Case 3 · claim photo</div>
-        <h3>Painted "damage" and added text</h3>
-        <span class="badge caught">✓ Caught</span>
-        <p style="margin-top:12px">Fake scratches drawn on a surface and the word "PAID" added. ELA works here because the photo had been compressed harder before the edit than after it.</p>
-        <ul class="rows">
-          <li><b>ELA</b><span class="ok">3 regions: the scratches and the text</span></li>
-          <li><b>Earlier copies</b><span class="ok">matches the unedited photo submitted before</span></li>
-          <li><b>Verdict</b><span>Medium risk; ELA is shown but does not count (see benchmark)</span></li>
-        </ul>
-      </div>
-    </article>
-
-    <!-- 4 -->
-    <article class="card case">
-      <div class="media">
-        <div class="viewer"><img src="showcase/twin_orig.jpg" alt="Photo with glasses copied from a twin photo" loading="lazy">
-          <div class="top"><img src="showcase/twin_ela.jpg" alt="ELA heatmap" loading="lazy"></div>
-          <div class="handle"></div><span class="tag l">Photo</span><span class="tag r">ELA</span>
-          <input type="range" min="0" max="100" value="55" aria-label="Compare photo and heatmap"></div>
-      </div>
-      <div class="body">
-        <div class="num">Case 4 · claim photo</div>
-        <h3>Object copied from a second photo of the same scene</h3>
-        <span class="badge partial">◐ Caught by duplicates, not by pixels</span>
-        <p style="margin-top:12px">Glasses were copied from a second shot of the same table. Both photos went through the same messenger compression, so the pasted area has the same save history.</p>
-        <ul class="rows">
-          <li><b>ELA</b><span class="ko">no region (same compression history)</span></li>
-          <li><b>Earlier copies</b><span class="ok">near-copy of the earlier upload (4 of 64 bits apart)</span></li>
-          <li><b>Verdict</b><span>Medium risk, driven by the duplicate match</span></li>
-        </ul>
-        <div class="lesson">No single detector is enough: here the cheap fingerprint check caught what pixel forensics could not.</div>
-      </div>
-    </article>
-
-    <!-- 5 -->
     <article class="card case">
       <div class="media">
         <div class="viewer"><img src="showcase/receipt_forged.jpg" alt="Receipt with the total changed from 13,07 to 18,07" loading="lazy">
@@ -311,7 +226,7 @@ footer p { margin: 0 0 6px; }
         </div>
       </div>
       <div class="body">
-        <div class="num">Case 5 · receipt</div>
+        <div class="num">Case 1 · receipt</div>
         <h3>One digit changed: total 13,07 → 18,07</h3>
         <span class="badge caught">✓ Caught by the document model</span>
         <p style="margin-top:12px">A real supermarket receipt photo. An "8" from another price was copied over the "3" in both totals, the old digit removed, and the file saved once, as a phone editor would.</p>
@@ -325,14 +240,14 @@ footer p { margin: 0 0 6px; }
       </div>
     </article>
 
-    <!-- 6 -->
+    <!-- 2 -->
     <article class="card case">
       <div class="media">
         <img src="showcase/receipt_telegram_dtd_zoom.jpg" alt="Forged totals after messenger recompression, DTD heatmap empty" loading="lazy" style="border-radius:12px">
         <div class="cap">DTD heatmap after the forged receipt was sent through a messenger: nothing left to see.</div>
       </div>
       <div class="body">
-        <div class="num">Case 6 · receipt · limit</div>
+        <div class="num">Case 2 · receipt · limit</div>
         <h3>The same forgery after WhatsApp / Telegram</h3>
         <span class="badge missed">✗ Missed</span>
         <p style="margin-top:12px">Messengers resize and recompress every image. That second compression wipes the subtle traces all pixel methods rely on.</p>
@@ -345,14 +260,14 @@ footer p { margin: 0 0 6px; }
       </div>
     </article>
 
-    <!-- 7 -->
+    <!-- 3 -->
     <article class="card case">
       <div class="media">
         <img src="showcase/receipt_ai.jpg" alt="Receipt edited with an AI image tool, extra line 2,69 and total 14,07" loading="lazy" style="border-radius:12px">
         <div class="cap">Edited with an AI image tool: an extra line "2,69 B" without a product name, totals and VAT changed consistently.</div>
       </div>
       <div class="body">
-        <div class="num">Case 7 · receipt · AI edit</div>
+        <div class="num">Case 3 · receipt · AI edit</div>
         <h3>Receipt edited with ChatGPT's image tool</h3>
         <span class="badge caught">✓ Caught via content credentials</span>
         <p style="margin-top:12px">The arithmetic is consistent (items sum to 14,07; 13,15 net + 0,92 VAT), so a simple math check would pass it. The model redraws the whole image, so there is no pasted seam either.</p>
@@ -367,14 +282,14 @@ footer p { margin: 0 0 6px; }
       </div>
     </article>
 
-    <!-- 8 -->
+    <!-- 4 -->
     <article class="card case">
       <div class="media" style="align-items:center;text-align:center;padding:36px 20px">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
         <div class="cap" style="margin-top:8px">Next real-world test</div>
       </div>
       <div class="body">
-        <div class="num">Case 8 · receipt · next</div>
+        <div class="num">Case 4 · receipt · next</div>
         <h3>Price changed with a pen, then photographed</h3>
         <span class="badge next">→ Next</span>
         <p style="margin-top:12px">The photo is genuine; the paper is forged. Metadata, ELA, TruFor and DTD all look for digital editing, so they will report a clean image. This is the most realistic case and needs different signals:</p>
@@ -424,14 +339,11 @@ footer p { margin: 0 0 6px; }
   <section id="lessons">
     <h2>What we learned</h2>
     <div class="lessons">
-      <div class="card"><h3>Layer the checks</h3><p>Each method failed somewhere another one succeeded: fingerprints caught the twin-photo copy, the document model caught the digit edit, metadata caught the AI edit.</p></div>
+      <div class="card"><h3>Layer the checks</h3><p>Each method failed somewhere another one succeeded: the document model caught the digit edit, metadata caught the AI edit, fingerprints caught re-submitted receipts.</p></div>
       <div class="card"><h3>Compression is the enemy</h3><p>After a messenger re-save, every pixel method missed the forged receipt. Ask for originals or use in-app capture; check content, not only pixels.</p></div>
       <div class="card"><h3>Measure false alarms</h3><p>"Located 63%" sounded great until clean photos showed regions too. Honest yes/no numbers: 24% at zero false alarms. Reviewers get heatmaps, not just a score.</p></div>
     </div>
 
-    <div class="card shot">
-      <img src="images/fraud-scanner.png" alt="Fraud Scanner web UI showing a heatmap comparison and a high-risk verdict" loading="lazy">
-    </div>
     <div class="card" style="margin-top:18px;padding:18px">
       <h3 style="margin:0 0 10px;font-size:16px">Run it locally</h3>
 <pre>git clone https://github.com/Daniel-Kasem48/aerial-change-detection
