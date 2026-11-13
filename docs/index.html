@@ -119,6 +119,13 @@ h2 { font-size: clamp(24px, 3vw, 32px); letter-spacing: -.025em; margin: 0 0 8px
   background: rgba(0,0,0,.6); color: #fff; pointer-events: none; }
 .viewer .tag.l { left: 10px; } .viewer .tag.r { right: 10px; }
 .cap { font-size: 12.5px; color: var(--faint); text-align: center; }
+.pairimg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pairimg figure { margin: 0; }
+.pairimg img { border-radius: 8px; width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: var(--surface); }
+.pairimg figcaption { font-size: 12px; color: var(--muted); text-align: center; margin-top: 4px; }
+table.cmp { font-size: 13px; background: var(--surface); border-radius: 10px; overflow: hidden; }
+table.cmp th, table.cmp td { padding: 7px 10px; }
+table.cmp td.chg { color: var(--high); font-weight: 600; }
 .trip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .trip figure { margin: 0; }
 .trip img { border-radius: 8px; width: 100%; }
@@ -243,8 +250,20 @@ footer p { margin: 0 0 6px; }
     <!-- 2 -->
     <article class="card case">
       <div class="media">
-        <img src="showcase/receipt_ai.jpg" alt="Receipt edited with an AI image tool, extra line 2,69 and total 14,07" loading="lazy" style="border-radius:12px">
-        <div class="cap">Edited with an AI image tool: an extra line "2,69 B" without a product name, totals and VAT changed consistently.</div>
+        <div class="pairimg">
+          <figure><img src="showcase/receipt_orig.jpg" alt="Original receipt: 9 items, total 13,07" loading="lazy"><figcaption>Original photo</figcaption></figure>
+          <figure><img src="showcase/receipt_ai.jpg" alt="AI-edited receipt: extra line 2,69, total 14,07" loading="lazy"><figcaption>AI-edited</figcaption></figure>
+        </div>
+        <table class="cmp">
+          <thead><tr><th></th><th>Original</th><th>AI-edited</th></tr></thead>
+          <tbody>
+            <tr><td>Item lines</td><td>9</td><td class="chg">10 (extra "2,69 B", no product name)</td></tr>
+            <tr><td>Total (SUMME / VISA)</td><td>13,07</td><td class="chg">14,07</td></tr>
+            <tr><td>Net 7%</td><td>12,21</td><td class="chg">13,15</td></tr>
+            <tr><td>VAT</td><td>0,86</td><td class="chg">0,92</td></tr>
+            <tr><td>TSE signature, counter, time</td><td>638796 · 11:27:06</td><td>identical</td></tr>
+          </tbody>
+        </table>
       </div>
       <div class="body">
         <div class="num">Case 2 · receipt · AI edit</div>
