@@ -308,19 +308,16 @@ footer p { margin: 0 0 6px; }
       <div class="media">
         <img src="showcase/street_zoom_robust.jpg" alt="Earlier photo and zoomed-out photo aligned, changes boxed" loading="lazy" style="border-radius:12px">
         <div class="cap">Robust mode: new photo aligned onto the old view.</div>
-        <img src="showcase/street_zoom_objects.jpg" alt="Object comparison of the same pair" loading="lazy" style="border-radius:12px">
-        <div class="cap">Object mode.</div>
       </div>
       <div class="body">
         <div class="num">Compare 2 · street, zoomed out, 10 min later</div>
         <h3>Different zoom and angle</h3>
-        <div class="by">Detected by <b>SIFT + RANSAC alignment</b> (robust mode) and <b>YOLOv8n</b></div>
+        <div class="by">Detected by <b>SIFT + RANSAC alignment</b> (robust mode)</div>
         <span class="badge partial">◐ Partly</span>
         <ul class="rows">
           <li><b>Pixel mode</b><span class="ko">75% "changed": the zoom</span></li>
           <li><b>Alignment</b><span class="ok">78% confidence, views matched</span></li>
           <li><b>Robust mode</b><span class="ko">13%, but moved shadows count as change</span></li>
-          <li><b>Object mode</b><span>grey car gone ✓ · parked car outside new view ✗ · person missed ✗</span></li>
         </ul>
       </div>
     </article>
