@@ -85,7 +85,8 @@ h2 { font-size: clamp(24px, 3vw, 32px); letter-spacing: -.025em; margin: 0 0 8px
 .check p { margin: 0; font-size: 14px; color: var(--muted); }
 
 .case { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 0; margin-bottom: 22px; overflow: hidden; }
-@media (max-width: 900px) { .case { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .case, .case.wide { grid-template-columns: 1fr; } }
+.case.wide { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
 .case .media { background: var(--surface-2); padding: 16px; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
 .case .body { padding: 22px 24px; }
 .case h3 { font-size: 21px; letter-spacing: -.015em; margin: 6px 0 8px; }
@@ -175,6 +176,7 @@ footer p { margin: 0 0 6px; }
     <b>Fraud Scanner</b>
     <nav>
       <a href="#cases">Use cases</a>
+      <a href="#compare" class="hide-sm">Compare</a>
       <a href="#benchmark" class="hide-sm">Benchmark</a>
       <a href="https://github.com/Daniel-Kasem48/aerial-change-detection">GitHub</a>
     </nav>
@@ -275,6 +277,46 @@ footer p { margin: 0 0 6px; }
       </div>
     </article>
 
+  </section>
+
+  <section id="compare">
+    <h2>Two-photo comparison</h2>
+    <p class="sub">Before vs after: what changed between two photos of the same scene.</p>
+
+    <article class="card case wide">
+      <div class="media">
+        <img src="showcase/street_objects.jpg" alt="Two street photos a few seconds apart, new cars boxed" loading="lazy" style="border-radius:12px">
+        <div class="cap">Same window, 2 seconds apart. Left: before, right: after.</div>
+      </div>
+      <div class="body">
+        <div class="num">Compare 1 · street</div>
+        <h3>Which cars arrived or left?</h3>
+        <span class="badge caught">✓ Objects found</span>
+        <ul class="rows">
+          <li><b>Object mode</b><span class="ok">blue car added, teal car gone (YOLO)</span></li>
+          <li><b>Pixel mode</b><span class="ko">65% "changed": wind and shadows</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="card case wide">
+      <div class="media">
+        <img src="showcase/accident_pixel.jpg" alt="Accident photos from two angles, naive pixel comparison" loading="lazy" style="border-radius:12px">
+        <div class="cap">Pixel mode: 79% "changed".</div>
+        <img src="showcase/accident_robust.jpg" alt="Same pair after alignment, real changes boxed" loading="lazy" style="border-radius:12px">
+        <div class="cap">Robust mode (aligned first): 13%, the truck, a person, a hidden sign.</div>
+      </div>
+      <div class="body">
+        <div class="num">Compare 2 · accident, two angles</div>
+        <h3>Different camera position</h3>
+        <span class="badge caught">✓ Alignment fixes it</span>
+        <ul class="rows">
+          <li><b>Pixel mode</b><span class="ko">79%: the angle change looks like change</span></li>
+          <li><b>Robust mode</b><span class="ok">SIFT alignment (45%), then 13%</span></li>
+        </ul>
+        <p class="cap" style="text-align:left">Photos: Infrogmation of New Orleans, CC BY 2.0, Wikimedia Commons.</p>
+      </div>
+    </article>
   </section>
 
   <section id="benchmark">
