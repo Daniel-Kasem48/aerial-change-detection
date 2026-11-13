@@ -100,6 +100,7 @@ main { padding: 28px 0 60px; }
 .level.low { color: var(--low); background: var(--low-soft); }
 .level.medium { color: var(--medium); background: var(--medium-soft); }
 .level.high { color: var(--high); background: var(--high-soft); }
+.level.unknown { color: var(--muted); background: var(--surface-2); }
 .reasons { list-style: none; padding: 0; margin: 14px 0 0; text-align: left; }
 .reasons li { padding: 8px 10px; border-radius: 10px; background: var(--surface-2); margin-top: 6px; font-size: 13.5px; }
 
@@ -402,11 +403,11 @@ function render() {
 
 function renderVerdict(v) {
   const pct = Math.round(v.score * 100);
-  $("scorePct").textContent = pct + "%";
+  $("scorePct").textContent = v.level === "unknown" ? "–" : pct + "%";
   $("arc").style.strokeDashoffset = 389.6 * (1 - v.score);
-  $("arc").style.stroke = `var(--${v.level})`;
+  $("arc").style.stroke = v.level === "unknown" ? "var(--faint)" : `var(--${v.level})`;
   $("level").className = "level " + v.level;
-  $("level").textContent = { low: "Low risk", medium: "Medium risk", high: "High risk" }[v.level];
+  $("level").textContent = { low: "Low risk", medium: "Medium risk", high: "High risk", unknown: "Not checked" }[v.level];
   $("reasons").innerHTML = v.reasons.length ? v.reasons.map(r => `<li>${esc(r)}</li>`).join("")
     : `<li>No strong signals found.</li>`;
 }

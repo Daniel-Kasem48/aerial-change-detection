@@ -225,3 +225,20 @@ def test_verdict_high_when_dtd_suspicious() -> None:
     d = DtdReport(True, 1.0, "", [DtdRegion(0, 0, 9, 9, 0.99, 400)])
     v = combine(metadata_risk=0.0, duplicate=False, trufor=None, dtd=d)
     assert v.level == "high"
+
+
+def test_verdict_is_unknown_when_nothing_could_judge_the_image(client: TestClient) -> None:
+    """Only DTD ticked on a PNG: no check produced evidence, so don't say 'low risk'."""
+    _ok, buf = cv2.imencode(".png", cv2.imread(str(SAMPLES / "2.jpg")))
+    client.app.state.fake_dtd.report = DtdReport(False, 0.0, "Document scan needs a JPEG; this file is PNG")
+    r = client.post("/api/scan?checks=", files={"file": ("x.png", io.BytesIO(buf.tobytes()), "image/png")})
+    body = r.json()
+    assert body["verdict"]["level"] == "unknown"
+    body = client.post(f"/api/scan/{body['scan_id']}/document").json()
+    assert body["verdict"]["level"] == "unknown"
+    assert "not checked" in " ".join(body["verdict"]["reasons"]).lower()
+
+
+def test_verdict_known_once_an_applicable_check_ran(client: TestClient) -> None:
+    body = _upload(client, SAMPLES / "2.jpg").json()
+    assert body["verdict"]["level"] in {"low", "medium", "high"}

@@ -69,14 +69,27 @@ class _Scan:
     fast: dict[str, Any]
     metadata_risk: float
     duplicate: bool
+    checks: tuple[str, ...] = ()
     trufor_report: TruForReport | None = None
     trufor: dict[str, Any] | None = None
     dtd_report: DtdReport | None = None
     dtd: dict[str, Any] | None = None
 
+    def judged(self) -> bool:
+        """True once a check that feeds the verdict could actually analyse the image."""
+        return ("metadata" in self.checks or "duplicates" in self.checks
+                or self.trufor_report is not None
+                or (self.dtd_report is not None and self.dtd_report.applicable))
+
     def response(self) -> dict[str, Any]:
-        verdict = combine(self.metadata_risk, self.duplicate, self.trufor_report, self.dtd_report)
-        return {**self.fast, "verdict": verdict.to_dict(), "trufor": self.trufor, "dtd": self.dtd}
+        if self.judged():
+            verdict = combine(self.metadata_risk, self.duplicate, self.trufor_report,
+                              self.dtd_report).to_dict()
+        else:
+            verdict = {"level": "unknown", "score": 0.0, "reasons": [
+                "Not checked: none of the selected scans could analyse this image. "
+                "Tick Metadata or Earlier copies, or upload a JPEG for ELA and the document scan."]}
+        return {**self.fast, "verdict": verdict, "trufor": self.trufor, "dtd": self.dtd}
 
 
 def create_app(settings: Settings | None = None, trufor: Any = _UNSET,
@@ -169,7 +182,8 @@ def create_app(settings: Settings | None = None, trufor: Any = _UNSET,
             "ela": ela_out,
             "timings_ms": timings,
         }
-        entry = _Scan(path, file.filename or path.name, fast, meta_risk, bool(duplicates))
+        entry = _Scan(path, file.filename or path.name, fast, meta_risk, bool(duplicates),
+                      tuple(selected))
         with lock:
             scans[scan_id] = entry
             while len(scans) > settings.max_scans:
