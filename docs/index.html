@@ -197,7 +197,7 @@ footer p { margin: 0 0 6px; }
     <div class="stats">
       <div class="card stat"><div class="n">5</div><div class="l">checks, chosen per scan</div></div>
       <div class="card stat"><div class="n">112</div><div class="l">benchmark images from 14 real camera photos</div></div>
-      <div class="card stat"><div class="n">2</div><div class="l">document cases</div></div>
+      <div class="card stat"><div class="n">3</div><div class="l">single-image cases</div></div>
       <div class="card stat"><div class="n">166</div><div class="l">automated tests</div></div>
     </div>
   </section>
@@ -281,6 +281,31 @@ footer p { margin: 0 0 6px; }
       </div>
     </article>
 
+    <!-- 3 -->
+    <article class="card case">
+      <div class="media">
+        <div class="viewer"><img src="showcase/erased.jpg" alt="Street photo with a parked car erased" loading="lazy">
+          <div class="top"><img src="showcase/erased_trufor.jpg" alt="TruFor heatmap" loading="lazy"></div>
+          <div class="handle"></div><span class="tag l">Edited</span><span class="tag r">TruFor</span>
+          <input type="range" min="0" max="100" value="55" aria-label="Compare photo and heatmap"></div>
+        <div class="trip" style="grid-template-columns:1fr 2fr">
+          <figure><img src="showcase/erased_before.jpg" alt="Same street with the car" loading="lazy"><figcaption>With the car</figcaption></figure>
+          <figure><figcaption style="text-align:left;margin-top:0">The black car (right, by the bike rack) was removed with Samsung's Object Eraser on the phone.</figcaption></figure>
+        </div>
+      </div>
+      <div class="body">
+        <div class="num">Case 3 · photo · phone edit</div>
+        <h3>Car erased with Samsung Object Eraser</h3>
+        <div class="by">Detected by <b>Metadata check (our code)</b>: Samsung editor marker "PhotoEditor_Re_Edit_Data"</div>
+        <span class="badge caught">✓ Caught by metadata</span>
+        <ul class="rows">
+          <li><b>Metadata</b><span class="ok">Samsung Gallery editor marker found</span></li>
+          <li><b>TruFor</b><span class="ko">only a faint glow at the erased spot; the dark wall is flagged in edited and unedited photos</span></li>
+          <li><b>ELA</b><span class="ko">no region</span></li>
+        </ul>
+        <div class="lesson">Re-saving or a screenshot removes the marker; then nothing here catches it.</div>
+      </div>
+    </article>
   </section>
 
   <section id="compare">
