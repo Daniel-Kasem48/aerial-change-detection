@@ -51,6 +51,10 @@ _EDITORS = (
 )
 # IPTC digital source type for AI media; C2PA manifests use the same term.
 _AI_SOURCE_MARKER = b"trainedalgorithmicmedia"
+# Phone gallery editors that leave a marker in the file (not in the Software tag).
+_EDITOR_MARKERS = {
+    b"PhotoEditor_Re_Edit_Data": "Samsung Gallery editor (e.g. Object Eraser) re-edit data in the file",
+}
 # PNG text keys written by diffusion UIs (AUTOMATIC1111, ComfyUI, InvokeAI, NovelAI)
 _AI_PNG_KEYS = ("parameters", "prompt", "workflow", "invokeai_metadata", "sd-metadata")
 
@@ -122,6 +126,11 @@ def analyze_metadata(path: str | Path) -> MetadataReport:
     editor = _match(software, _EDITORS)
     if editor:
         flags.append(_flag("editing_software", f"Software tag says '{software}'"))
+    else:
+        raw = path.read_bytes()
+        marker = next((why for m, why in _EDITOR_MARKERS.items() if m in raw), None)
+        if marker:
+            flags.append(_flag("editing_software", marker))
 
     gap = _gap(captured, modified)
     if gap is not None and gap > _MAX_GAP:

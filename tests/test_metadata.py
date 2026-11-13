@@ -108,3 +108,13 @@ def test_unreadable_file_raises(tmp_path: Path) -> None:
 def test_camera_name_does_not_repeat_brand(tmp_path: Path) -> None:
     path = _save_jpeg(tmp_path / "c.jpg", {MAKE: "Canon", MODEL: "Canon EOS 70D"})
     assert analyze_metadata(path).camera == "Canon EOS 70D"
+
+
+def test_samsung_gallery_editor_trailer_is_flagged(tmp_path: Path) -> None:
+    """Samsung's Gallery editor (Object Eraser etc.) appends re-edit data after the JPEG."""
+    path = _save_jpeg(tmp_path / "s.jpg", {MAKE: "samsung", MODEL: "Galaxy A56 5G"})
+    with path.open("ab") as f:
+        f.write(b'PhotoEditor_Re_Edit_Data{"originalPath":"/data/sec/photoeditor/0/x.jpg"}')
+    report = analyze_metadata(path)
+    assert "editing_software" in report.flag_codes
+    assert "Samsung" in report.flags[0].reason
