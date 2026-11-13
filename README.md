@@ -297,18 +297,23 @@ A FastAPI service with a single-page UI that runs all single-image checks.
 ```bash
 pip install -e ".[server]"            # add ",trufor" for the deep scan
 export TRUFOR_DIR=... TRUFOR_WEIGHTS=...   # optional, see "TruFor" below
+export DTD_DIR=.../DocTamper/models DTD_WEIGHTS=.../dtd_sroie.pth   # optional document scan
 python -m src.server --port 8000      # open http://localhost:8000
 ```
 
 | Endpoint | What it does |
 |---|---|
-| `POST /api/scan` | Upload a photo (JPEG/PNG/WebP, max 15 MB). Fast checks in about 1 s: metadata, duplicate search against earlier uploads, ELA heatmap, verdict |
+| `POST /api/scan?checks=metadata,duplicates,ela` | Upload a photo (JPEG/PNG/WebP, max 15 MB). Runs the selected fast checks (default all) in about 1 s: metadata, duplicate search against earlier uploads, ELA heatmap, verdict |
 | `POST /api/scan/{id}/deep` | Runs TruFor on the same photo (30-40 s on a laptop CPU), cached per scan, updates the verdict. 503 if TruFor is not installed |
-| `GET /api/health` | Status and whether the deep scan is available |
+| `POST /api/scan/{id}/document` | DocTamper DTD document scan for edited text (JPEG only, about 40 s per receipt on CPU; blank tiles are skipped), cached, updates the verdict. 503 if not installed |
+| `GET /api/health` | Status and which model scans are installed |
 | `GET /api/examples` | Example photos used by the UI |
 | `GET /docs` | OpenAPI / Swagger UI |
 
-The verdict combines metadata risk, duplicates and TruFor as independent
+In the UI you tick which scans to run (remembered per browser); model scans run
+one after another after the fast checks.
+
+The verdict combines metadata risk, duplicates, TruFor and DTD as independent
 evidence (`src/server/verdict.py`). ELA is shown but deliberately left out of
 the score because it is unreliable on real photos. Uploads go to `data/`
 (`SCANNER_DATA` to change), only the last 200 are kept.

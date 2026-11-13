@@ -134,6 +134,18 @@ pre { margin: 10px 0 0; padding: 14px; border-radius: 12px; background: var(--su
 .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--accent); animation: spin .8s linear infinite; display: inline-block; vertical-align: -4px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading { display: none; text-align: center; color: var(--muted); padding: 28px; }
+.options { margin-top: 16px; padding: 14px 16px; }
+.opt-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.opt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 12px; cursor: pointer; background: var(--surface); transition: border-color .12s, background .12s; }
+.opt:hover { border-color: var(--accent); }
+.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opt input { accent-color: var(--accent); width: 16px; height: 16px; margin-top: 2px; flex: 0 0 auto; }
+.opt b { display: block; font-size: 13.5px; }
+.opt small { display: block; font-size: 12px; color: var(--muted); }
+.opt.off { opacity: .5; cursor: not-allowed; }
+[hidden] { display: none !important; }
 footer { color: var(--faint); font-size: 12.5px; padding: 26px 0 40px; border-top: 1px solid var(--border); }
 footer a { color: var(--muted); }
 </style>
@@ -152,8 +164,9 @@ footer a { color: var(--muted); }
 <main class="wrap">
   <section class="hero">
     <h1>Was this photo edited?</h1>
-    <p>Upload a claim photo. Fast checks read the metadata, look for earlier copies and draw an error-level map.
-      A deep scan with the TruFor forgery detector then marks manipulated areas.</p>
+    <p>Upload a claim photo or receipt and pick the scans below. Fast checks read the metadata, look for
+      earlier copies and draw an error-level map; TruFor marks edited areas in photos, DTD finds edited text in
+      receipts and documents.</p>
 
     <label class="card drop" id="drop">
       <input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden>
@@ -162,6 +175,23 @@ footer a { color: var(--muted); }
       <small>JPEG, PNG or WebP · up to 15 MB</small>
     </label>
     <div class="examples" id="examples"><span class="label">Or try an example:</span></div>
+
+    <div class="card options" id="options">
+      <div class="opt-head"><b>Scans to run</b><span class="sub">Your choice is remembered in this browser.</span></div>
+      <div class="opt-grid">
+        <label class="opt"><input type="checkbox" data-check="metadata" checked>
+          <span><b>Metadata</b><small>Editing software, AI markers, dates · instant</small></span></label>
+        <label class="opt"><input type="checkbox" data-check="duplicates" checked>
+          <span><b>Earlier copies</b><small>Same photo submitted before · instant</small></span></label>
+        <label class="opt"><input type="checkbox" data-check="ela" checked>
+          <span><b>Error level analysis</b><small>Compression heatmap, visual aid · ~1 s</small></span></label>
+        <label class="opt" id="optTrufor"><input type="checkbox" data-check="trufor" checked>
+          <span><b>Deep scan · TruFor</b><small id="hintTrufor">Photo forgery detector · ~30–40 s</small></span></label>
+        <label class="opt" id="optDtd"><input type="checkbox" data-check="dtd">
+          <span><b>Document scan · DTD</b><small id="hintDtd">Edited text on receipts and documents, JPEG only · ~1 min</small></span></label>
+      </div>
+    </div>
+
     <div class="error" id="error"></div>
     <div class="loading" id="loading"><span class="spinner"></span>&nbsp; Running fast checks…</div>
   </section>
@@ -175,6 +205,7 @@ footer a { color: var(--muted); }
             <button data-v="original" class="on">Original</button>
             <button data-v="ela">ELA</button>
             <button data-v="trufor" disabled>TruFor</button>
+            <button data-v="dtd" disabled>DTD</button>
           </div>
         </div>
         <div class="viewer single" id="viewer">
@@ -199,33 +230,34 @@ footer a { color: var(--muted); }
         </div>
         <span class="level low" id="level">Low risk</span>
         <ul class="reasons" id="reasons"></ul>
-        <div class="deep" id="deep">
-          <div class="row"><span><b>Deep scan</b> · TruFor</span><button class="btn" id="deepBtn">Run</button></div>
-          <div class="sub" id="deepNote">Trained forgery detector, about 30–40 s on a laptop CPU.</div>
-          <div class="progress" id="deepProg" hidden><i id="deepBar"></i></div>
-        </div>
+        <div id="runs"></div>
       </div>
     </div>
 
     <div class="checks">
-      <div class="card pad check">
+      <div class="card pad check" data-card="metadata">
         <h3><span class="ico">ⓘ</span> Metadata</h3>
         <dl class="kv" id="metaKv"></dl>
         <div id="metaFlags"></div>
       </div>
-      <div class="card pad check">
+      <div class="card pad check" data-card="duplicates">
         <h3><span class="ico">⧉</span> Earlier copies</h3>
         <div id="dupes"></div>
         <div class="note">Perceptual fingerprint; survives resizing, recompression and small crops.</div>
       </div>
-      <div class="card pad check">
+      <div class="card pad check" data-card="ela">
         <h3><span class="ico">◐</span> Error level analysis</h3>
         <div id="ela"></div>
         <div class="note">Visual aid only: on real high-quality photos ELA is unreliable, so it does not count toward the risk score.</div>
       </div>
-      <div class="card pad check">
+      <div class="card pad check" data-card="trufor">
         <h3><span class="ico">◎</span> TruFor</h3>
-        <div id="tf"><div class="note">Not run yet.</div></div>
+        <div id="tf"></div>
+      </div>
+      <div class="card pad check" data-card="dtd">
+        <h3><span class="ico">▤</span> Document scan (DTD)</h3>
+        <div id="dtd"></div>
+        <div class="note">Trained on edited text in documents and receipts. Messenger recompression can hide edits.</div>
       </div>
     </div>
 
@@ -236,19 +268,46 @@ footer a { color: var(--muted); }
 <footer class="wrap">
   Built with FastAPI, OpenCV and PyTorch.
   Deep scan uses <a href="https://grip-unina.github.io/TruFor" target="_blank" rel="noopener">TruFor</a>
-  (Guillaro et al., CVPR 2023, GRIP-UNINA), licensed for non-commercial use.
+  (Guillaro et al., CVPR 2023, GRIP-UNINA), document scan uses
+  <a href="https://github.com/qcf-568/DocTamper" target="_blank" rel="noopener">DocTamper DTD</a>
+  (Qu et al., CVPR 2023); both for non-commercial use.
   Results are signals for a human reviewer, not proof.
 </footer>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let state = null, trufor = false, view = "original", deepTimer = null;
+const FAST = ["metadata", "duplicates", "ela"];
+const MODELS = {
+  trufor: { name: "Deep scan · TruFor", path: "deep", expect: 40 },
+  dtd: { name: "Document scan · DTD", path: "document", expect: 60 },
+};
+let state = null, view = "original", avail = { trufor: false, dtd: false };
+const run = {};  // per model: {status, t0, timer, msg}
+
+// --- options -------------------------------------------------------------
+const boxes = [...document.querySelectorAll("#options input[data-check]")];
+try {
+  const saved = JSON.parse(localStorage.getItem("scanner.checks") || "null");
+  if (saved) boxes.forEach(b => { if (b.dataset.check in saved) b.checked = saved[b.dataset.check]; });
+} catch (_) {}
+boxes.forEach(b => b.onchange = () => {
+  try { localStorage.setItem("scanner.checks", JSON.stringify(Object.fromEntries(boxes.map(x => [x.dataset.check, x.checked])))); } catch (_) {}
+});
+const selected = () => boxes.filter(b => b.checked && !b.disabled).map(b => b.dataset.check);
 
 fetch("/api/health").then(r => r.json()).then(h => {
-  trufor = h.trufor;
-  $("tfDot").classList.toggle("on", trufor);
-  $("tfStatus").textContent = trufor ? "Deep scan available" : "Deep scan not installed";
+  avail = { trufor: h.trufor, dtd: h.dtd };
+  for (const [k, id] of [["trufor", "optTrufor"], ["dtd", "optDtd"]]) {
+    const box = $(id).querySelector("input");
+    box.disabled = !avail[k];
+    $(id).classList.toggle("off", !avail[k]);
+    if (!avail[k]) $(k === "trufor" ? "hintTrufor" : "hintDtd").textContent = "Not installed on this server (see README)";
+  }
+  const n = (h.trufor ? 1 : 0) + (h.dtd ? 1 : 0);
+  $("tfDot").classList.toggle("on", n > 0);
+  $("tfStatus").textContent = n === 2 ? "Deep + document scan available" : h.trufor ? "Deep scan available"
+    : h.dtd ? "Document scan available" : "Fast checks only";
 }).catch(() => { $("tfStatus").textContent = "Server offline"; });
 
 fetch("/api/examples").then(r => r.json()).then(names => {
@@ -270,57 +329,74 @@ $("file").onchange = (e) => e.target.files[0] && scan(e.target.files[0]);
 ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
 drop.addEventListener("drop", (e) => e.dataTransfer.files[0] && scan(e.dataTransfer.files[0]));
 
+// --- flow ----------------------------------------------------------------
 async function scan(file) {
+  const want = selected();
+  if (!want.length) { showError("Tick at least one scan."); return; }
   showError(""); $("loading").style.display = "block"; $("results").classList.remove("show");
-  clearInterval(deepTimer);
+  for (const k in run) clearInterval(run[k].timer);
   const fd = new FormData(); fd.append("file", file);
+  const fast = want.filter(c => FAST.includes(c));
   try {
-    const r = await fetch("/api/scan", { method: "POST", body: fd });
+    const r = await fetch(`/api/scan?checks=${fast.join(",")}`, { method: "POST", body: fd });
     const body = await r.json();
     if (!r.ok) throw new Error(body.detail || r.statusText);
-    state = body; view = "original"; render();
+    state = body; state.models = want.filter(c => c in MODELS); view = "original";
+    for (const k of Object.keys(MODELS)) run[k] = { status: state.models.includes(k) ? "queued" : "off" };
+    render();
     $("results").classList.add("show");
     $("results").scrollIntoView({ behavior: "smooth", block: "start" });
-    if (trufor) runDeep();
+    for (const k of state.models) await runModel(k, body.scan_id);
   } catch (err) { showError(err.message); }
   finally { $("loading").style.display = "none"; $("file").value = ""; }
 }
 
-async function runDeep() {
-  const btn = $("deepBtn"); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-  $("deepProg").hidden = false; const t0 = Date.now(); const id = state.scan_id;
-  deepTimer = setInterval(() => {
-    const s = (Date.now() - t0) / 1000;
-    $("deepBar").style.width = Math.min(95, s / 40 * 100) + "%";
-    $("deepNote").textContent = `Analysing… ${s.toFixed(0)} s`;
-  }, 500);
+async function runModel(kind, id) {
+  if (!state || state.scan_id !== id) return;
+  const r0 = run[kind] = { status: "running", t0: Date.now() };
+  r0.timer = setInterval(renderRuns, 500); renderRuns();
   try {
-    const r = await fetch(`/api/scan/${id}/deep`, { method: "POST" });
+    const r = await fetch(`/api/scan/${id}/${MODELS[kind].path}`, { method: "POST" });
     const body = await r.json();
     if (!r.ok) throw new Error(body.detail || r.statusText);
     if (state.scan_id !== id) return;
-    state = body; view = "trufor"; render();
-    $("deepBar").style.width = "100%";
-    $("deepNote").textContent = `Done in ${(body.trufor.ms / 1000).toFixed(1)} s.`;
-    btn.textContent = "Done";
-  } catch (err) {
-    $("deepNote").textContent = err.message; btn.disabled = false; btn.textContent = "Retry";
-  } finally { clearInterval(deepTimer); }
+    const models = state.models; state = body; state.models = models;
+    r0.status = "done"; r0.msg = `Done in ${(body[kind].ms / 1000).toFixed(1)} s`;
+    if (body[kind].overlay) view = kind;
+    render();
+  } catch (err) { r0.status = "error"; r0.msg = err.message; renderRuns(); }
+  finally { clearInterval(r0.timer); }
 }
-$("deepBtn").onclick = runDeep;
+
+function renderRuns() {
+  const rows = Object.entries(MODELS).filter(([k]) => run[k] && run[k].status !== "off").map(([k, m]) => {
+    const r = run[k], s = r.t0 ? (Date.now() - r.t0) / 1000 : 0;
+    const pct = r.status === "done" ? 100 : r.status === "running" ? Math.min(95, s / m.expect * 100) : 0;
+    const label = { queued: "Waiting…", running: `Analysing… ${s.toFixed(0)} s`, done: r.msg, error: r.msg }[r.status];
+    const btn = r.status === "error" ? `<button class="btn" data-retry="${k}">Retry</button>`
+      : r.status === "running" ? '<span class="spinner"></span>' : r.status === "done" ? "✓" : "";
+    return `<div class="deep"><div class="row"><span><b>${m.name}</b></span>${btn}</div>
+      <div class="sub">${esc(label)}</div><div class="progress"><i style="width:${pct}%"></i></div></div>`;
+  });
+  $("runs").innerHTML = rows.join("");
+  $("runs").querySelectorAll("[data-retry]").forEach(b => b.onclick = () => runModel(b.dataset.retry, state.scan_id));
+}
 
 $("seg").onclick = (e) => { const v = e.target.dataset.v; if (v && !e.target.disabled) { view = v; renderViewer(); } };
 $("cut").oninput = (e) => $("viewer").style.setProperty("--cut", e.target.value + "%");
 
+// --- rendering -----------------------------------------------------------
 function render() {
   const s = state;
   $("fname").textContent = s.filename || "Photo";
   $("fmeta").textContent = `${s.image.width} × ${s.image.height} · ${s.image.format} · ${(s.image.bytes / 1024 / 1024).toFixed(2)} MB`;
-  renderVerdict(s.verdict); renderViewer(); renderMeta(s.metadata); renderDupes(s.duplicates);
-  renderEla(s.ela); renderTf(s.trufor);
-  if (!trufor) { $("deepBtn").disabled = true; $("deepBtn").textContent = "Unavailable";
-    $("deepNote").textContent = "Install TruFor on the server to enable (see README)."; }
-  else if (!s.trufor) { $("deepBtn").disabled = false; $("deepBtn").textContent = "Run"; $("deepProg").hidden = true; $("deepBar").style.width = "0"; }
+  const shown = new Set([...s.checks, ...s.models]);
+  document.querySelectorAll("[data-card]").forEach(c => c.hidden = !shown.has(c.dataset.card));
+  renderVerdict(s.verdict); renderViewer(); renderRuns();
+  if (s.metadata) renderMeta(s.metadata);
+  if (s.duplicates) renderDupes(s.duplicates);
+  if (s.ela) renderEla(s.ela);
+  renderTf(s.trufor); renderDtd(s.dtd);
   $("json").textContent = JSON.stringify(s, (k, v) => (typeof v === "string" && v.startsWith("data:image")) ? v.slice(0, 40) + "…" : v, 2);
 }
 
@@ -336,16 +412,18 @@ function renderVerdict(v) {
 }
 
 function renderViewer() {
-  const s = state, overlay = { ela: s.ela.overlay, trufor: s.trufor && s.trufor.overlay }[view];
+  const s = state;
+  const overlays = { ela: s.ela && s.ela.overlay, trufor: s.trufor && s.trufor.overlay, dtd: s.dtd && s.dtd.overlay };
   document.querySelectorAll("#seg button").forEach(b => {
-    b.classList.toggle("on", b.dataset.v === view);
-    if (b.dataset.v === "trufor") b.disabled = !s.trufor;
-    if (b.dataset.v === "ela") b.disabled = !s.ela.overlay;
+    const v = b.dataset.v;
+    if (v !== "original") { b.disabled = !overlays[v]; b.hidden = !(s.checks.includes(v) || s.models.includes(v)); }
+    b.classList.toggle("on", v === view);
   });
   $("imgBase").src = s.image.preview;
+  const overlay = overlays[view];
   const single = view === "original" || !overlay;
   $("viewer").classList.toggle("single", single);
-  if (!single) { $("imgTop").src = overlay; $("tagR").textContent = view === "ela" ? "ELA" : "TruFor"; }
+  if (!single) { $("imgTop").src = overlay; $("tagR").textContent = { ela: "ELA", trufor: "TruFor", dtd: "DTD" }[view]; }
 }
 
 function renderMeta(m) {
@@ -372,12 +450,22 @@ function renderEla(e) {
 }
 
 function renderTf(t) {
-  if (!t) { $("tf").innerHTML = `<div class="note">${trufor ? "Running after the fast checks…" : "Not installed on this server."}</div>`; return; }
+  if (!t) { $("tf").innerHTML = `<div class="note">Waiting for the deep scan…</div>`; return; }
   const color = t.suspicious ? "high" : t.score > 0.3 ? "medium" : "low";
   $("tf").innerHTML = `<div class="big">${t.score.toFixed(2)}</div>${meter(t.score, color)}
     <div class="kv"><dt>Verdict</dt><dd>${t.suspicious ? "Manipulation likely" : "No clear manipulation"}</dd>
     <dt>Marked area</dt><dd>${(t.manipulated_fraction * 100).toFixed(1)}%</dd><dt>Regions</dt><dd>${t.regions.length}</dd>
     <dt>Time</dt><dd>${(t.ms / 1000).toFixed(1)} s</dd></div>`;
+}
+
+function renderDtd(d) {
+  if (!d) { $("dtd").innerHTML = `<div class="note">Waiting for the document scan…</div>`; return; }
+  if (!d.applicable) { $("dtd").innerHTML = `<div class="note">${esc(d.reason)}</div>`; return; }
+  const color = d.suspicious ? "high" : d.score > 0.5 ? "medium" : "low";
+  $("dtd").innerHTML = `<div class="big">${d.score.toFixed(2)}</div>${meter(d.score, color)}
+    <div class="kv"><dt>Verdict</dt><dd>${d.suspicious ? "Edited text likely" : "No edited text found"}</dd>
+    <dt>Edited areas</dt><dd>${d.regions.length}</dd><dt>Time</dt><dd>${(d.ms / 1000).toFixed(1)} s</dd></div>
+    <div class="note">${esc(d.reason)}</div>`;
 }
 
 function showError(msg) { $("error").style.display = msg ? "block" : "none"; $("error").textContent = msg; }

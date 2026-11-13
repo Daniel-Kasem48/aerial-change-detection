@@ -11,6 +11,7 @@ Numbers come from small local experiments; treat them as indicative.
 | Duplicate / reused photo (perceptual hash) | `src/forensics/fingerprint.py` | in verdict | yes |
 | Error level analysis | `src/forensics/ela.py` | shown, not in verdict | no |
 | TruFor (trained detector, external) | `src/forensics/trufor.py` | in verdict when installed | weak |
+| DocTamper DTD (document text edits, external) | `src/forensics/dtd.py` | in verdict when installed | no (in our test) |
 
 ## 2. Real-world photo test (`scripts/eval_realworld.py`)
 
@@ -54,7 +55,7 @@ Lessons:
 3. A second messenger recompression removes the pixel traces for every method
    tried. Only content checks (arithmetic, duplicates, context) survive.
 
-## 4. DocTamper DTD (experiment, not integrated yet)
+## 4. DocTamper DTD (integrated as optional "document scan")
 
 DTD (Qu et al., "Towards Robust Tampered Text Detection in Document Image",
 CVPR 2023, https://github.com/qcf-568/DocTamper) reads the grey image plus the
@@ -75,8 +76,12 @@ How it was run safely:
   0 missing / 0 unexpected keys.
 - Two library incompatibilities were patched (segmentation-models-pytorch 0.2
   `Conv2dReLU` signature; its `load_state_dict`/`train` overrides).
-- Inference uses 512x512 tiles like the authors' evaluation; about 1-4 minutes
-  per receipt on a laptop CPU. JPEG input only.
+- Inference uses 512x512 tiles like the authors' evaluation; tiles without
+  visible content are skipped, which brought a receipt from about 4 minutes to
+  about 40 seconds on a laptop CPU. JPEG input only.
+- Yes/no rule (`DtdReport.suspicious`): a region with peak >= 0.9 and at least
+  150 pixels. Tuned on one receipt (forged digits 1.0, untouched receipt only a
+  27 px speck at 0.77), so it needs a larger test set.
 
 Licence: the repo has no licence file and the dataset is non-commercial, so
 the code and weights stay outside this repo (same approach as TruFor).
@@ -116,8 +121,8 @@ before it goes into the verdict.
    original" instead of reporting "clean".
 2. **Receipt consistency check**: OCR, then items vs total, net + VAT = gross,
    date vs TSE timestamps. Works regardless of compression.
-3. **DTD integration** as a "document scan" next to TruFor (optional install,
-   own API endpoint and heatmap tab; skip blank tiles for speed).
+3. ~~DTD integration~~ done: `POST /api/scan/{id}/document`, UI tick box and
+   heatmap tab.
 4. **Noise check** into the verdict after testing on a larger set.
 5. **Fair evaluation**: about 50 photos plus "Find it again", tune on half,
    report on the other half.

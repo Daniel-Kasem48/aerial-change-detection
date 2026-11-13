@@ -15,6 +15,7 @@ from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from src.forensics.dtd import DtdReport
     from src.forensics.trufor import TruForReport
 
 HIGH = 0.7
@@ -22,6 +23,7 @@ MEDIUM = 0.4
 DUPLICATE_WEIGHT = 0.5
 TRUFOR_SUSPICIOUS_WEIGHT = 0.85
 TRUFOR_SCORE_WEIGHT = 0.5  # unflagged TruFor score adds a little evidence
+DTD_SUSPICIOUS_WEIGHT = 0.85
 
 
 @dataclass(frozen=True)
@@ -34,7 +36,8 @@ class Verdict:
         return asdict(self)
 
 
-def combine(metadata_risk: float, duplicate: bool, trufor: TruForReport | None) -> Verdict:
+def combine(metadata_risk: float, duplicate: bool, trufor: TruForReport | None,
+            dtd: DtdReport | None = None) -> Verdict:
     signals: list[tuple[float, str]] = []
     if metadata_risk > 0:
         signals.append((metadata_risk, _metadata_reason(metadata_risk)))
@@ -46,6 +49,8 @@ def combine(metadata_risk: float, duplicate: bool, trufor: TruForReport | None) 
                             "Forgery detector marks a manipulated area"))
         elif trufor.score > 0:
             signals.append((trufor.score * TRUFOR_SCORE_WEIGHT, ""))
+    if dtd is not None and dtd.suspicious:
+        signals.append((DTD_SUSPICIOUS_WEIGHT, "Document scan finds edited text"))
 
     clean = 1.0
     for s, _ in signals:

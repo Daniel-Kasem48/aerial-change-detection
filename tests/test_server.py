@@ -9,6 +9,8 @@ import cv2
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+from src.forensics.dtd import DtdReport
+from src.forensics.dtd import Region as DtdRegion
 from src.forensics.trufor import Region, TruForReport
 from src.server.app import Settings, create_app
 from src.server.verdict import combine
@@ -31,11 +33,29 @@ class FakeTruFor:
                             heatmap=np.zeros((h, w), np.float32))
 
 
+class FakeDtd:
+    """Stands in for the document model."""
+
+    def __init__(self, report: DtdReport) -> None:
+        self.report = report
+        self.calls = 0
+
+    def analyze(self, path: str | Path) -> DtdReport:
+        self.calls += 1
+        h, w = cv2.imread(str(path)).shape[:2]
+        r = self.report
+        return DtdReport(r.applicable, r.score, r.reason, r.regions, r.tampered_fraction,
+                         np.zeros((h, w), np.float32))
+
+
 @pytest.fixture
 def client(tmp_path: Path) -> TestClient:
     fake = FakeTruFor(TruForReport(score=0.9))
-    app = create_app(Settings(data_dir=tmp_path, examples_dir=SAMPLES), trufor=fake)
+    fake_dtd = FakeDtd(DtdReport(True, 1.0, "1 text area(s) look edited",
+                                 [DtdRegion(10, 10, 40, 60, 0.99, 900)], 0.001))
+    app = create_app(Settings(data_dir=tmp_path, examples_dir=SAMPLES), trufor=fake, dtd=fake_dtd)
     app.state.fake_trufor = fake
+    app.state.fake_dtd = fake_dtd
     return TestClient(app)
 
 
@@ -45,7 +65,7 @@ def _upload(client: TestClient, path: Path):
 
 def test_health(client: TestClient) -> None:
     body = client.get("/api/health").json()
-    assert body == {"status": "ok", "trufor": True}
+    assert body == {"status": "ok", "trufor": True, "dtd": True}
 
 
 def test_index_serves_ui(client: TestClient) -> None:
@@ -93,7 +113,8 @@ def test_deep_scan_unknown_id_is_404(client: TestClient) -> None:
 
 
 def test_deep_scan_without_trufor_is_503(tmp_path: Path) -> None:
-    c = TestClient(create_app(Settings(data_dir=tmp_path, examples_dir=SAMPLES), trufor=None))
+    c = TestClient(create_app(Settings(data_dir=tmp_path, examples_dir=SAMPLES), trufor=None,
+                              dtd=None))
     assert c.get("/api/health").json()["trufor"] is False
     scan_id = _upload(c, SAMPLES / "2.jpg").json()["scan_id"]
     assert c.post(f"/api/scan/{scan_id}/deep").status_code == 503
@@ -106,7 +127,7 @@ def test_rejects_non_image(client: TestClient) -> None:
 
 def test_rejects_too_large_upload(tmp_path: Path) -> None:
     c = TestClient(create_app(Settings(data_dir=tmp_path, examples_dir=SAMPLES,
-                                       max_upload_bytes=1000), trufor=None))
+                                       max_upload_bytes=1000), trufor=None, dtd=None))
     r = _upload(c, SAMPLES / "2.jpg")
     assert r.status_code == 413
 
@@ -148,3 +169,59 @@ def test_verdict_medium_for_editing_software_or_duplicate() -> None:
 
 def test_verdict_high_for_ai_marker() -> None:
     assert combine(metadata_risk=0.95, duplicate=False, trufor=None).level == "high"
+
+
+# --- check selection and document scan -----------------------------------
+
+def test_scan_runs_only_selected_fast_checks(client: TestClient) -> None:
+    path = SAMPLES / "2.jpg"
+    r = client.post("/api/scan?checks=metadata",
+                    files={"file": (path.name, path.read_bytes(), "image/jpeg")})
+    body = r.json()
+    assert body["checks"] == ["metadata"]
+    assert body["metadata"] is not None
+    assert body["duplicates"] is None and body["ela"] is None
+
+
+def test_scan_rejects_unknown_check(client: TestClient) -> None:
+    path = SAMPLES / "2.jpg"
+    r = client.post("/api/scan?checks=metadata,magic",
+                    files={"file": (path.name, path.read_bytes(), "image/jpeg")})
+    assert r.status_code == 422
+
+
+def test_skipped_duplicate_check_does_not_index_photo(client: TestClient) -> None:
+    path = SAMPLES / "2.jpg"
+    client.post("/api/scan?checks=metadata", files={"file": (path.name, path.read_bytes(), "image/jpeg")})
+    assert _upload(client, path).json()["duplicates"] == []
+
+
+def test_document_scan_adds_dtd_and_updates_verdict(client: TestClient) -> None:
+    scan_id = _upload(client, SAMPLES / "2.jpg").json()["scan_id"]
+    body = client.post(f"/api/scan/{scan_id}/document").json()
+    assert body["dtd"]["suspicious"] is True
+    assert body["dtd"]["overlay"].startswith("data:image/jpeg;base64,")
+    assert body["verdict"]["level"] == "high"
+    assert any("text" in r.lower() for r in body["verdict"]["reasons"])
+    client.post(f"/api/scan/{scan_id}/document")
+    assert client.app.state.fake_dtd.calls == 1
+
+
+def test_deep_and_document_results_are_both_kept(client: TestClient) -> None:
+    scan_id = _upload(client, SAMPLES / "2.jpg").json()["scan_id"]
+    client.post(f"/api/scan/{scan_id}/deep")
+    body = client.post(f"/api/scan/{scan_id}/document").json()
+    assert body["trufor"] is not None and body["dtd"] is not None
+
+
+def test_document_scan_without_dtd_is_503(tmp_path: Path) -> None:
+    c = TestClient(create_app(Settings(data_dir=tmp_path, examples_dir=SAMPLES), trufor=None,
+                              dtd=None))
+    scan_id = _upload(c, SAMPLES / "2.jpg").json()["scan_id"]
+    assert c.post(f"/api/scan/{scan_id}/document").status_code == 503
+
+
+def test_verdict_high_when_dtd_suspicious() -> None:
+    d = DtdReport(True, 1.0, "", [DtdRegion(0, 0, 9, 9, 0.99, 400)])
+    v = combine(metadata_risk=0.0, duplicate=False, trufor=None, dtd=d)
+    assert v.level == "high"
