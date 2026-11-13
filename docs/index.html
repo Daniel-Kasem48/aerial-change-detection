@@ -185,10 +185,8 @@ footer p { margin: 0 0 6px; }
 <main class="wrap">
   <section class="hero">
     <div class="eyebrow">Single-image forensics · tested on real photos and receipts</div>
-    <h1>Was this claim photo or receipt edited? What works, and where it breaks.</h1>
-    <p class="lead">A FastAPI service with a web UI that combines five checks: metadata and AI credentials, duplicate
-      search, error level analysis, the TruFor photo-forgery network and the DocTamper network for edited text.
-      Below are the cases we actually ran, with the real heatmaps and the honest results, including the misses.</p>
+    <h1>Was this receipt edited?</h1>
+    <p class="lead">Five checks for edited photos and receipts. Real results, including the misses.</p>
     <div class="cta">
       <a class="btn primary" href="#cases">See the use cases</a>
       <a class="btn" href="https://github.com/Daniel-Kasem48/aerial-change-detection">Source on GitHub</a>
@@ -203,8 +201,7 @@ footer p { margin: 0 0 6px; }
 
   <section id="checks">
     <h2>The five checks</h2>
-    <p class="sub">Fast checks answer in about a second; the two neural networks run on request. The verdict combines
-      them as independent evidence and says "Not checked" when none of the chosen scans could judge the image.</p>
+    <p class="sub">Pick any combination per scan.</p>
     <div class="checks">
       <div class="card check"><div class="k">instant</div><h3>Metadata</h3><p>Editing software, AI markers such as C2PA "trainedAlgorithmicMedia", suspicious dates.</p></div>
       <div class="card check"><div class="k">instant</div><h3>Earlier copies</h3><p>64-bit perceptual fingerprint; survives resizing, recompression and small crops.</p></div>
@@ -216,8 +213,7 @@ footer p { margin: 0 0 6px; }
 
   <section id="cases">
     <h2>Use cases we tested</h2>
-    <p class="sub">Drag across each receipt to compare it with the heatmap (warm colours = suspicious). Every image and
-      number below is real output of the scanner.</p>
+    <p class="sub">Drag across the receipt to compare with the heatmap.</p>
 
     <!-- 1 -->
     <article class="card case">
@@ -236,14 +232,14 @@ footer p { margin: 0 0 6px; }
         <div class="num">Case 1 · receipt</div>
         <h3>One digit changed: total 13,07 → 18,07</h3>
         <span class="badge caught">✓ Caught by the document model</span>
-        <p style="margin-top:12px">A real supermarket receipt photo. An "8" from another price was copied over the "3" in both totals, the old digit removed, and the file saved once, as a phone editor would.</p>
+        <p style="margin-top:12px">"3" replaced by an "8" copied from another price, in both totals.</p>
         <ul class="rows">
           <li><b>DTD</b><span class="ok">both edited digits marked exactly (peak 1.00); untouched receipt stays clean</span></li>
           <li><b>TruFor</b><span class="ko">missed (0.12): two digits are ~0.1% of the image</span></li>
           <li><b>ELA</b><span class="ok">found both digits, but cannot be trusted alone</span></li>
           <li><b>Verdict</b><span>High risk, 88%</span></li>
         </ul>
-        <div class="lesson">General photo models miss tiny text edits; a model trained on edited documents finds them.</div>
+        
       </div>
     </article>
 
@@ -269,14 +265,14 @@ footer p { margin: 0 0 6px; }
         <div class="num">Case 2 · receipt · AI edit</div>
         <h3>Receipt edited with ChatGPT's image tool</h3>
         <span class="badge caught">✓ Caught via content credentials</span>
-        <p style="margin-top:12px">The arithmetic is consistent (items sum to 14,07; 13,15 net + 0,92 VAT), so a simple math check would pass it. The model redraws the whole image, so there is no pasted seam either.</p>
+        <p style="margin-top:12px">Extra item added; totals and VAT changed to match.</p>
         <ul class="rows">
           <li><b>Metadata</b><span class="ok">OpenAI C2PA credential, "trainedAlgorithmicMedia" → AI-generated</span></li>
           <li><b>TruFor</b><span class="ko">0.16, missed</span></li>
           <li><b>ELA / DTD</b><span class="na">not applicable: the file is a PNG</span></li>
           <li><b>Verdict</b><span>High risk, 96% (from the metadata alone)</span></li>
         </ul>
-        <div class="lesson">A screenshot strips the credential. What still betrays it: the same TSE signature and timestamp as the original but a different total, and an item line without a name.</div>
+        <div class="lesson">Same TSE signature as the original, different total.</div>
       </div>
     </article>
 
@@ -290,7 +286,7 @@ footer p { margin: 0 0 6px; }
         <div class="num">Case 3 · receipt · next</div>
         <h3>Price changed with a pen, then photographed</h3>
         <span class="badge next">→ Next</span>
-        <p style="margin-top:12px">The photo is genuine; the paper is forged. Metadata, ELA, TruFor and DTD all look for digital editing, so they will report a clean image. This is the most realistic case and needs different signals:</p>
+        <p style="margin-top:12px">Real photo, forged paper. Pixel checks see nothing; planned signals:</p>
         <ul class="rows">
           <li><b>Ink colour</b><span>thermal print is neutral grey; a blue pen has colour</span></li>
           <li><b>Font / strokes</b><span>dot-matrix digits vs handwriting</span></li>
@@ -302,8 +298,7 @@ footer p { margin: 0 0 6px; }
 
   <section id="benchmark">
     <h2>Benchmark on real camera photos</h2>
-    <p class="sub">14 real camera photos from Wikimedia Commons (car damage, windshields, water damage, interiors), each
-      as 2 clean copies and 6 realistic edits: 112 images. "Located" means a detected region overlaps the edit.</p>
+    <p class="sub">14 real camera photos × 8 versions (2 clean, 6 edited) = 112 images.</p>
     <div class="two">
       <div class="card chart">
         <div class="legend" aria-hidden="true">
@@ -318,7 +313,7 @@ footer p { margin: 0 0 6px; }
       </div>
       <div class="card chart">
         <h3 style="margin:0 0 4px;font-size:16px">Automatic yes/no decision (TruFor)</h3>
-        <p style="margin:0 0 12px;color:var(--muted);font-size:14px">The heatmap also marks small areas on 19 of 28 clean copies, so a fully automatic decision is a trade-off:</p>
+        
         <table>
           <thead><tr><th>False alarms on clean</th><th>Edits caught</th></tr></thead>
           <tbody>
@@ -328,8 +323,7 @@ footer p { margin: 0 0 6px; }
             <tr><td>5 / 28 (18%)</td><td>46 / 84 (55%)</td></tr>
           </tbody>
         </table>
-        <p style="margin:12px 0 0;color:var(--muted);font-size:13.5px">ELA raised false alarms on 6 of 28 clean copies and located 0 of 84 edits on these
-          high-quality camera photos, which is why it is excluded from the verdict. Small sample, rule tuned on the same photos: indicative only.</p>
+        <p style="margin:12px 0 0;color:var(--muted);font-size:13.5px">ELA: 0/84 located, 6/28 false alarms.</p>
       </div>
     </div>
   </section>
@@ -337,9 +331,9 @@ footer p { margin: 0 0 6px; }
   <section id="lessons">
     <h2>What we learned</h2>
     <div class="lessons">
-      <div class="card"><h3>Layer the checks</h3><p>Each method failed somewhere another one succeeded: the document model caught the digit edit, metadata caught the AI edit, fingerprints caught re-submitted receipts.</p></div>
-      <div class="card"><h3>Compression is the enemy</h3><p>After a messenger re-save, every pixel method missed the forged receipt. Ask for originals or use in-app capture; check content, not only pixels.</p></div>
-      <div class="card"><h3>Measure false alarms</h3><p>"Located 63%" sounded great until clean photos showed regions too. Honest yes/no numbers: 24% at zero false alarms. Reviewers get heatmaps, not just a score.</p></div>
+      <div class="card"><h3>Layer the checks</h3><p>Each check catches what another misses.</p></div>
+      <div class="card"><h3>Compression is the enemy</h3><p>A messenger re-save hides pixel traces. Ask for the original.</p></div>
+      <div class="card"><h3>Measure false alarms</h3><p>24% caught at zero false alarms. Heatmaps help reviewers.</p></div>
     </div>
 
     <div class="card" style="margin-top:18px;padding:18px">
